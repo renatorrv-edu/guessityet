@@ -73,3 +73,6 @@ También, en las fases finales de desarrollo se tiene en cuenta la dockerizació
 ## Planificación
 
 Tardaré apróximadamente unas once o doce semanas. Mi idea es dedicar todas las tardes entre semana, después de las prácticas, varias horas para desarrollar esta aplicación y ponerla a prueba. Según avance el desarrollo y tenga tutorias con mis profesores, este itinerario irá tomando más forma.
+
+Se planea documentar correcta y abundantemente los pasos del proceso de desarrrollo. Adjuntar diagramas y otra información que ayude a comprender su funcionamiento.
+
