@@ -43,9 +43,21 @@ Este proyecto se hace con la idea de tener un juego dinámico, divertido y que i
 
 ### Introducción
 
+Esta tercera y última aplicación web se trata de una página que estaría dividida en distintas secciones y que pretende dar la posibilidad a los usuarios de indicar cierto tipo de contenidos que podría tener una película para que otros lo consulten. Por ejemplo, "¿Tiene la película escena post-créditos?", "¿Muere algún perro/gato en la película?", "¿Esta película tiene sustos tipo 'jumpscare'? ¿Cuándo?".
 
+### Finalidad
 
+En esta aplicación los usuarios podrán crearse cuentas para contribuir. De una API llamada TMDB (The Movie DataBase) llamaríamos para tener acceso a una gran variedad de títulos. Los usuarios pueden entrar a cada película y votar en alguna de las secciones mencionadas anteriormente. Estos votos se recopilarían para hacer una media y mostrarla a los usuarios que quieran consultarla. Por ejemplo, si 80 usuarios votan que en "Spider-Man: No Way Home" hay una escena post-créditos y 20 votan que no, el usuario que entre verá que hay un 80% de los usuarios que indican que sí que la hay. Otro ejemplo podría ser el entrar a una película de miedo, como "Ju-On" y podrá ver qué porcentaje de usuarios han votado que tiene jumpscares y quizás ver en qué partes de la película ocurren. También se planifica la inserción de cuentas de moderador.
 
+Para realizarlas necesitarás una cuenta de usuario, pero no para verlas. 
+
+La gente puede votar a los usuarios dándole "kudos" o "gracias" por sus contribuciones, por lo que habría insignias y otras recompensas.
+
+### Objetivos
+
+Ofrecer una comunidad grande con usuarios que contribuyan a las estadísticas de las películas y que todos puedan consultar estas contribuciones.
+
+Esta idea surge a raíz de haber tenido la duda, al terminar de ver alguna película en el cine, de si había una escena postcréditos por la que mereciera la pena quedarse un rato más. 
 
 ## Autor
 Renato R. Romero Valencia
@@ -54,7 +66,7 @@ Renato R. Romero Valencia
 
 Como hardware, usaré mi ordenador personal, el cual cuenta con suficiente potencia para llevar a cabo el desarrollo de estas aplicaciones y ponerlas a prueba. Usaré GitHub para el repositorio donde guardaré las distintas versiones de este programa.
 
-Y en cuestión de software usaré PyCharm Professional ya que pretendo desarrollar estas aplicaciones con Django. También usaré, probablemente, Visual Studio Code para el front-end (cuestiones de diseño con bootstrap y funcionalidades con JavaScript o ReactJS).
+Y en cuestión de software usaré PyCharm Professional ya que pretendo desarrollar estas aplicaciones con Django. También usaré, probablemente, Visual Studio Code para el front-end (cuestiones de diseño con bootstrap y funcionalidades con JavaScript o ReactJS). Todo corriendo en Windows 11.
 
 También, en las fases finales de desarrollo se tiene en cuenta la dockerización del proyecto para permitir su despliegue en un servidor Web (probablemente, una instancia AWS).
 
