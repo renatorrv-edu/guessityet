@@ -1,70 +1,29 @@
-# Proyecto de desarrollo de Desarrollo de Aplicaciones Web
-
-A falta de tener una tutoría con alguno de mis profesores, ahora mismo tengo tres ideas que me llevana rondando la cabeza unos cuantos meses. Intentaré describirlos de manera resumida y decidiré con mi tutor del proyecto cuál de ellos puede ser más interesante, desafiante y asequible.
-
-Añado a continuación una breve descripción de los tres proyectos.
-
-## Proyecto 1 - Aplicación Web para un restaurante
+# Guess It Yet? (nombre provisional)
 
 ### Introducción
 
-La idea detrás de esta aplicación web sería desplegar una página de un restaurante con sus distintas secciones (contacto, dónde estamos, carta...) y un apartado donde las cuentas de usuario podrán realizar pedidos.
-
-También contaremos con una cuenta especial para el restaurante y otras para los repartidores, cada una con distintas funcionalidades.
+**Guess It Yet?** ("*¿Ya lo has adivinado?*") es una aplicación web pensada como una especie de juego diario en el que el jugador debe intentar adivinar un videojuego elegido al azar a través de la API de **IGDB** (una base de datos masiva de videojuegos) gracias a una serie de capturas de pantalla. Además, pretendo incluir un sistema de juego multijugador basado en *lobbies* similar a los usados en **Kahoot.it**.
 
 ### Finalidad
 
-Esta idea podría servir como plataforma para restaurantes pequeños que quieran desplegar un servicio web para recibir pedidos, organizarlos y completarlos. Con distintos tipos de cuentas las cuales podrán realizar distintos tipos de acciones. Esta idea surgió a raíz de trabajar en la pollería de mi tía hace unos años, lo que me hizo pensar en cómo su negocio podría ser más sencillo y crecer con una plataforma de este tipo funcional y bien organizada.
+No hay muchas más pretensiones más allá de crear una página que se actualice diariamente y ofrezca a los jugadores una experiencia jugable y agradable todos los días. También se planea que el usuario tenga acceso a los días anteriores. Es un modelo de juego muy popular, como **Wordle** o el propio **Guess The Game**, página en la que me he inspirado mucho. La intención es que el usuario tenga ganas cada día de volver a jugar un rato, a revisar su histórico, sus récords y rachas y retar a sus amigos o crear una sala online para jugar con ellos.
 
 ### Objetivos
 
-Además del resto de páginas estáticas, el servicio ofrecerá un apartado donde los usuarios podrán seleccionar los distintos elementos del menú que quieran, realicen un pago (simularemos una pasarela de pago para el proyecto) y a continuación tengan una sección con los pedidos en curso. Esto mostrará el precio pagado, cuánto tardará aproximadamente, el nombre de su repartidor y el estado del pedido ("recibido", "en preparación", "esperando repartidor", "en reparto", "completado"). Quizás se podría simular incluso sobre un mapa el trayecto del repartidor con el pedido.
+Desde el punto de vista técnico, la intención principal es desarrollar el backend con Python y Django. Este backend se encargará, todos los días, de elegir un videojuego al azar de la base de datos (que no haya surgido antes) y mostrarlo ante el usuario (ya sea registrado o no) con una interfaz que le permita intentar adivinarlo hasta 5 veces. A cada intento fallido, se mostrará una nueva imagen más clara y se otorgará alguna pista, como el año de salida del videojuego o su desarrolladora. Como última pista se permitirá preguntar a la IA (probablemente, ChatGPT) en un pequeño recuadro de chat hasta 5 preguntas sobre el juego y la IA tendrá estrictamente prohibido decir el título del juego, su saga u otra información que facilite mucho adivinarlo. Se podrán acceder a los juegos de días anteriores y jugarlos también. Se mantendrá un histórico del progreso del jugador (tanto si está registrado como si no).
 
-También contaremos con cuentas para el restaurante (donde se mostrarán los pedidos que realizan los usuarios, el contenido del pedido, etc.) Y, por último, cuentas de tipo repartidor, quienes podrán ver en tiempo real los pedidos que surgen y "reclamarlos" para ellos. Un posible desafío será el de intentar calcular las rutas más óptimas para estos repartidores.
+Los jugadores registrados podrán acceder a su perfil, y ver sus récords y rachas, conseguir medallas y títulos e incluso retar a otros jugadores a hacerlo mejor que ellos (se creará un enlace con la entrada seleccionada para enviarlo a otras personas y se intentará guardar registro de esto).
 
-## Proyecto 2 - Aplicación Web para juego de adivinar el videojuego
+También se planea, aunque sea ambicioso, crear un sistema de lobbies para jugar online de forma asíncrona con otros jugadores (que podrán ser registrados o no). Sería algo similar a Kahoot, donde las imágenes de los juegos elegidos irían apareciendo y los usuarios intentarían adivinarlo lo antes posible para ganar puntos. La idea es que sean partidas rápidas de unos 5 minutos. Se baraja la posibilidad de guardar el progreso de estas partidas en el perfil de cada usuario.
 
-### Introducción
-
-Esta segunda aplicación web sería una especie de página-juego en el que el usuario debe intentar adivinar un videojuego, seleccionado a través de una API que contenga una base de datos de videojuegos, en un número determinado de intentos solo viendo capturas de pantalla de este. Algo similar a lo que podemos encontrar https://guessthe.game/.
-
-### Finalidad
-
-Se pretende ofrecer al usuario la posibilidad de jugar cada día a un nuevo desafío en el que tendrá que adivinar un videojuego a raíz de capturas de pantalla de este. También se pretende incluir otras secciones que funcionen de manera similar (adivina la canción, la portada, etc.). El usuario puede jugar de manera anónima. Pero si crea una cuenta, puede tener acceso a una serie de estadísticas, como la racha de aciertos o la media de intentos, comparar sus estadísticas con otros jugadores, enviar los desafíos a otras personas con un enlace y que el desafiado pueda ver cuántos intentos/tiempo le tomó al usuario principal resolver el enigma. Acceder también a las pruebas de otros días. 
-
-También se ha valorado que los usuarios tengan perfiles y un sistema de comentarios similar a Facebook.
-
-### Objetivos
-
-Este proyecto se hace con la idea de tener un juego dinámico, divertido y que invite al usuario a visitar a menudo la página. Se ha valorado, una vez termine la entrega de proyecto, añadir publicidad y desplegar online con el objetivo de darle publicidad y, aunque sean mínimos, generar ingresos pasivos. La idea es automatizar este proceso de selección de videojuegos lo máximo posible.
-
-
-## Proyecto 3 - Aplicación Web para informar sobre películas
-
-### Introducción
-
-Esta tercera y última aplicación web se trata de una página que estaría dividida en distintas secciones y que pretende dar la posibilidad a los usuarios de indicar cierto tipo de contenidos que podría tener una película para que otros lo consulten. Por ejemplo, "¿Tiene la película escena post-créditos?", "¿Muere algún perro/gato en la película?", "¿Esta película tiene sustos tipo 'jumpscare'? ¿Cuándo?".
-
-### Finalidad
-
-En esta aplicación los usuarios podrán crearse cuentas para contribuir. De una API llamada TMDB (The Movie DataBase) llamaríamos para tener acceso a una gran variedad de títulos. Los usuarios pueden entrar a cada película y votar en alguna de las secciones mencionadas anteriormente. Estos votos se recopilarían para hacer una media y mostrarla a los usuarios que quieran consultarla. Por ejemplo, si 80 usuarios votan que en "Spider-Man: No Way Home" hay una escena post-créditos y 20 votan que no, el usuario que entre verá que hay un 80% de los usuarios que indican que sí que la hay. Otro ejemplo podría ser el entrar a una película de miedo, como "Ju-On" y podrá ver qué porcentaje de usuarios han votado que tiene jumpscares y quizás ver en qué partes de la película ocurren. También se planifica la inserción de cuentas de moderador.
-
-Para realizarlas necesitarás una cuenta de usuario, pero no para verlas. 
-
-La gente puede votar a los usuarios dándole "kudos" o "gracias" por sus contribuciones, por lo que habría insignias y otras recompensas.
-
-### Objetivos
-
-Ofrecer una comunidad grande con usuarios que contribuyan a las estadísticas de las películas y que todos puedan consultar estas contribuciones.
-
-Esta idea surge a raíz de haber tenido la duda, al terminar de ver alguna película en el cine, de si había una escena postcréditos por la que mereciera la pena quedarse un rato más. 
+El front-end intentará realizarse con ReactJS para tratar la información de manera eficiente y presentarla de forma atractiva y optimizada al usuario. Se usará Bootstrap y clases CSS personalizadas para darle un aspecto moderno, joven, intuitivo y conciso.
 
 ## Autor
 Renato R. Romero Valencia
 
 ## Medios hardware y software
 
-Como hardware, usaré mi ordenador personal, el cual cuenta con suficiente potencia para llevar a cabo el desarrollo de estas aplicaciones y ponerlas a prueba. Usaré GitHub para el repositorio donde guardaré las distintas versiones de este programa.
+Como hardware, usaré mi ordenador personal, el cual cuenta con suficiente potencia para llevar a cabo el desarrollo de estas aplicaciones y ponerlas a prueba. Usaré GitHub para alojar el repositorio donde guardaré las distintas versiones de esta aplicación.
 
 Y en cuestión de software usaré PyCharm Professional ya que pretendo desarrollar estas aplicaciones con Django. También usaré, probablemente, Visual Studio Code para el front-end (cuestiones de diseño con bootstrap y funcionalidades con JavaScript o ReactJS). Todo corriendo en Windows 11.
 
@@ -75,4 +34,3 @@ También, en las fases finales de desarrollo se tiene en cuenta la dockerizació
 Tardaré apróximadamente unas once o doce semanas. Mi idea es dedicar todas las tardes entre semana, después de las prácticas, varias horas para desarrollar esta aplicación y ponerla a prueba. Según avance el desarrollo y tenga tutorias con mis profesores, este itinerario irá tomando más forma.
 
 Se planea documentar correcta y abundantemente los pasos del proceso de desarrrollo. Adjuntar diagramas y otra información que ayude a comprender su funcionamiento.
-
