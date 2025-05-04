@@ -21,6 +21,7 @@ También se planea, aunque sea ambicioso, crear un sistema de lobbies para jugar
 El front-end intentará realizarse con ReactJS para tratar la información de manera eficiente y presentarla de forma atractiva y optimizada al usuario. Se usará Bootstrap y clases CSS personalizadas para darle un aspecto moderno, joven, intuitivo y conciso.
 
 ## Autor
+
 Renato R. Romero Valencia
 
 ## Medios hardware y software
@@ -36,3 +37,7 @@ También, en las fases finales de desarrollo se tiene en cuenta la dockerizació
 Tardaré apróximadamente unas once o doce semanas. Mi idea es dedicar todas las tardes entre semana, después de las prácticas, varias horas para desarrollar esta aplicación y ponerla a prueba. Según avance el desarrollo y tenga tutorias con mis profesores, este itinerario irá tomando más forma.
 
 Se planea documentar correcta y abundantemente los pasos del proceso de desarrrollo. Adjuntar diagramas y otra información que ayude a comprender su funcionamiento.
+
+## Enlace a Kanban de Taiga.io
+
+https://tree.taiga.io/project/renatorrv-edu-guess-it-yet/kanban
