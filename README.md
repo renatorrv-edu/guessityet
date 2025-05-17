@@ -2,7 +2,7 @@
 
 ### Introducción
 
-**Guess It Yet?** ("*¿Ya lo has adivinado?*") es una aplicación web pensada como una especie de juego diario en el que el jugador debe intentar adivinar un videojuego elegido al azar a través de la API de **IGDB** (una base de datos masiva de videojuegos) gracias a una serie de capturas de pantalla, que se irán mostrando de menos a más reveladoras. 
+**Guess It Yet?** ("*¿Ya lo has adivinado?*") es una aplicación web pensada como una especie de juego diario en el que el jugador debe intentar adivinar un videojuego elegido al azar a través de la API de **RAWG** (una base de datos masiva de videojuegos) gracias a una serie de capturas de pantalla, que se irán mostrando de menos a más reveladoras. 
 
 También tendrá integrado un sistema de perfiles que mantengan un histórico de hitos y récords de los usuarios, aunque se permitirá jugar de manera anónima y guardar el progreso de manera más sencilla a través de las sesiones. Además, pretendo incluir un sistema de juego multijugador basado en lobbies similar a los usados en **Kahoot.it**, donde los jugadores se enfrentarán a otros tratando de adivinar el juego por las imágenes en partidas rápidas de unos cinco minutos apróximadamente.
 
