@@ -11,7 +11,7 @@ class Game(models.Model):
     developer = models.CharField(max_length=255, null=True, blank=True)
     release_year = models.IntegerField(null=True, blank=True)
     genres = models.CharField(max_length=255, null=True, blank=True)
-    platformdirs = models.CharField(max_length=255, null=True, blank=True)
+    platforms = models.CharField(max_length=255, null=True, blank=True)
     metacritic = models.IntegerField(null=True, blank=True)
     video_url = models.URLField(null=True, blank=True)
     # Fecha en la que se usó en el juego diario
