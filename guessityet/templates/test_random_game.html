@@ -15,15 +15,29 @@
     <p><strong>Plataformas:</strong> {{ game.platforms }}</p>
     <p><strong>Metacritic:</strong> {{ game.metacritic }}</p>
 
+    {% if game.gif_path %}
+        <h3 class="mt-5">GIF del juego (5 segundos)</h3>
+        <div class="text-center mb-4">
+            <img src="/media/{{ game.gif_path }}"
+                 alt="GIF del juego {{ game.title }}"
+                 class="img-fluid rounded shadow"
+                 style="max-width: 600px; border: 2px solid #dee2e6;">
+        </div>
+    {% endif %}
+
     <h3 class="mt-5">Capturas de Pantalla</h3>
     <div class="row">
         {% for screenshot in game.screenshot_set.all %}
-            <img src="{{ screenshot.image_url }}" alt="Screenshot">
+            <div class="col-md-6 col-lg-4 mb-3">
+                <img src="{{ screenshot.image_url }}"
+                     alt="Screenshot {{ screenshot.difficulty }}"
+                     class="img-fluid rounded shadow">
+            </div>
         {% endfor %}
     </div>
 
     {% if game.video_url %}
-        <h3 class="mt-5">Vídeo del juego</h3>
+        <h3 class="mt-5">Vídeo Original del juego</h3>
         <div class="ratio ratio-16x9">
             <video controls>
                 <source src="{{ game.video_url }}" type="video/mp4">

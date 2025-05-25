@@ -137,3 +137,9 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Creamos el directorio si no existe
+os.makedirs(MEDIA_ROOT / "game_gifs", exist_ok=True)
