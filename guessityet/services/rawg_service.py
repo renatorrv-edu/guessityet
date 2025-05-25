@@ -242,7 +242,7 @@ class RAWGService:
                 # Configuración optimizada para MoviePy 1.0.3
                 clip_resized.write_gif(
                     temp_gif_path,
-                    fps=20,
+                    fps=30,
                     program="imageio",
                     verbose=False,
                 )
@@ -252,7 +252,7 @@ class RAWGService:
                 # Segundo intento con configuración aún más básica
                 try:
                     print("Intentando conversión básica...")
-                    clip_resized.write_gif(temp_gif_path, fps=20)
+                    clip_resized.write_gif(temp_gif_path, fps=30)
                     print("✓ GIF convertido con configuración básica")
                 except Exception as e2:
                     print(f"Error en segundo intento: {e2}")
