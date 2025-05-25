@@ -2,49 +2,340 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Juego Aleatorio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ game.title }} - GuessItYet Test</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .game-info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .screenshot-card {
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        .screenshot-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        .difficulty-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+        }
+        .screenshot-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .screenshot-img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .screenshot-card:hover .screenshot-img {
+            transform: scale(1.05);
+        }
+        .ai-indicator {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+        }
+        .gif-container {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        .video-container {
+            margin: 2rem 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .progress-indicator {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        .step-1 { background: #dc3545; }
+        .step-2 { background: #fd7e14; }
+        .step-3 { background: #ffc107; color: #000; }
+        .step-4 { background: #28a745; }
+        .step-5 { background: #6f42c1; }
+    </style>
 </head>
-<body class="container py-5">
+<body class="bg-light">
 
-    <h1 class="mb-4">{{ game.title }}</h1>
-
-    <p><strong>Año:</strong> {{ game.release_year }}</p>
-    <p><strong>Desarrollador:</strong> {{ game.developer }}</p>
-    <p><strong>Géneros:</strong> {{ game.genres }}</p>
-    <p><strong>Plataformas:</strong> {{ game.platforms }}</p>
-    <p><strong>Metacritic:</strong> {{ game.metacritic }}</p>
-
-    {% if game.gif_path %}
-        <h3 class="mt-5">GIF del juego (5 segundos)</h3>
-        <div class="text-center mb-4">
-            <img src="/media/{{ game.gif_path }}"
-                 alt="GIF del juego {{ game.title }}"
-                 class="img-fluid rounded shadow"
-                 style="max-width: 600px; border: 2px solid #dee2e6;">
-        </div>
-    {% endif %}
-
-    <h3 class="mt-5">Capturas de Pantalla</h3>
-    <div class="row">
-        {% for screenshot in game.screenshot_set.all %}
-            <div class="col-md-6 col-lg-4 mb-3">
-                <img src="{{ screenshot.image_url }}"
-                     alt="Screenshot {{ screenshot.difficulty }}"
-                     class="img-fluid rounded shadow">
+<div class="container py-4">
+    <!-- Header del juego -->
+    <div class="game-info-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-gamepad me-3"></i>{{ game.title }}
+                </h1>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2"><i class="fas fa-calendar-alt me-2"></i><strong>Año:</strong> {{ game.release_year|default:"N/A" }}</p>
+                        <p class="mb-2"><i class="fas fa-code me-2"></i><strong>Desarrollador:</strong> {{ game.developer|default:"N/A" }}</p>
+                        <p class="mb-2"><i class="fas fa-tags me-2"></i><strong>Géneros:</strong> {{ game.genres|default:"N/A" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2"><i class="fas fa-desktop me-2"></i><strong>Plataformas:</strong> {{ game.platforms|default:"N/A" }}</p>
+                        {% if game.metacritic %}
+                            <p class="mb-2">
+                                <i class="fas fa-star me-2"></i><strong>Metacritic:</strong>
+                                <span class="badge bg-warning text-dark">{{ game.metacritic }}/100</span>
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        {% endfor %}
+            <div class="col-md-4 text-center">
+                <div class="progress-indicator">
+                    <h5 class="mb-3">Progresión de Dificultad</h5>
+                    <div>
+                        <div class="step-circle step-1">1</div>
+                        <div class="step-circle step-2">2</div>
+                        <div class="step-circle step-3">3</div>
+                        <div class="step-circle step-4">4</div>
+                        <div class="step-circle step-5">5</div>
+                    </div>
+                    <small class="d-block mt-2">Muy Difícil → Muy Fácil</small>
+                </div>
+            </div>
+        </div>
     </div>
 
-    {% if game.video_url %}
-        <h3 class="mt-5">Vídeo Original del juego</h3>
-        <div class="ratio ratio-16x9">
-            <video controls>
-                <source src="{{ game.video_url }}" type="video/mp4">
-                Tu navegador no soporta el elemento de video.
-            </video>
+    <!-- GIF del juego -->
+    {% if game.gif_path %}
+        <div class="gif-container">
+            <h3 class="mb-4">
+                <i class="fas fa-film me-2"></i>GIF del juego (10 segundos a 15 FPS)
+            </h3>
+            <img src="/media/{{ game.gif_path }}"
+                 alt="GIF del juego {{ game.title }}"
+                 class="img-fluid rounded shadow-lg"
+                 style="max-width: 600px; max-height: 400px;">
+            <p class="text-muted mt-2">
+                <i class="fas fa-robot me-1"></i>Procesado automáticamente desde el vídeo original
+            </p>
         </div>
     {% endif %}
+
+    <!-- Capturas de pantalla procesadas por IA -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="fas fa-brain me-2"></i>Capturas Analizadas por IA
+                <small class="text-muted">(Ordenadas por dificultad de adivinanza)</small>
+            </h3>
+        </div>
+    </div>
+
+    {% if game.screenshot_set.all %}
+        <div class="row">
+            {% for screenshot in game.screenshot_set.all %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="screenshot-card card h-100">
+                        <!-- Badge de dificultad -->
+                        <div class="difficulty-badge
+                            {% if screenshot.difficulty == 1 %}badge bg-danger
+                            {% elif screenshot.difficulty == 2 %}badge bg-warning
+                            {% elif screenshot.difficulty == 3 %}badge bg-info
+                            {% elif screenshot.difficulty == 4 %}badge bg-success
+                            {% else %}badge bg-secondary
+                            {% endif %}">
+                            Nivel {{ screenshot.difficulty }}
+                        </div>
+
+                        <!-- Contenedor de imagen -->
+                        <div class="screenshot-container">
+                            {% if screenshot.local_path %}
+                                <!-- Imagen procesada con zoom por IA -->
+                                <img src="/media/{{ screenshot.local_path }}"
+                                     alt="Screenshot procesada nivel {{ screenshot.difficulty }}"
+                                     class="screenshot-img">
+                            {% else %}
+                                <!-- Imagen original -->
+                                <img src="{{ screenshot.image_url }}"
+                                     alt="Screenshot original nivel {{ screenshot.difficulty }}"
+                                     class="screenshot-img">
+                            {% endif %}
+                        </div>
+
+                        <!-- Información de la captura -->
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                {% if screenshot.difficulty == 1 %}
+                                    <i class="fas fa-fire text-danger me-2"></i>Muy Difícil
+                                {% elif screenshot.difficulty == 2 %}
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>Difícil
+                                {% elif screenshot.difficulty == 3 %}
+                                    <i class="fas fa-balance-scale text-info me-2"></i>Intermedio
+                                {% elif screenshot.difficulty == 4 %}
+                                    <i class="fas fa-thumbs-up text-success me-2"></i>Fácil
+                                {% else %}
+                                    <i class="fas fa-check-circle text-secondary me-2"></i>Muy Fácil
+                                {% endif %}
+                            </h6>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if screenshot.local_path %}
+                                    <span class="ai-indicator">
+                                        <i class="fas fa-robot me-1"></i>Procesada por IA
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-image me-1"></i>Original
+                                    </span>
+                                {% endif %}
+
+                                <small class="text-muted">
+                                    #{{ screenshot.difficulty }}/5
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Explicación del proceso -->
+        <div class="alert alert-info mt-4" role="alert">
+            <h5 class="alert-heading">
+                <i class="fas fa-info-circle me-2"></i>¿Cómo funciona el análisis por IA?
+            </h5>
+            <p class="mb-2">
+                Nuestro sistema utiliza <strong>OpenAI Vision</strong> para analizar cada captura de pantalla y determinar qué tan reveladora es para identificar el juego:
+            </p>
+            <ul class="mb-2">
+                <li><strong>Nivel 1 (Muy Difícil):</strong> Zoom extremo en áreas poco reveladoras</li>
+                <li><strong>Nivel 2 (Difícil):</strong> Zoom alto mostrando detalles limitados</li>
+                <li><strong>Nivel 3 (Intermedio):</strong> Zoom moderado con algunas pistas</li>
+                <li><strong>Nivel 4 (Fácil):</strong> Zoom ligero mostrando más contexto</li>
+                <li><strong>Nivel 5 (Muy Fácil):</strong> Imagen completa con elementos distintivos</li>
+            </ul>
+            <p class="mb-0">
+                <i class="fas fa-lightbulb me-1"></i>
+                La IA evita capturas con logos obvios o demasiado abstractas, seleccionando las 5 mejores de hasta 10 disponibles.
+            </p>
+        </div>
+
+    {% else %}
+        <div class="alert alert-warning" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            No se encontraron capturas de pantalla para este juego.
+        </div>
+    {% endif %}
+
+    <!-- Vídeo original -->
+    {% if game.video_url %}
+        <div class="mt-5">
+            <h3 class="mb-4">
+                <i class="fas fa-play-circle me-2"></i>Vídeo Original del Juego
+            </h3>
+            <div class="video-container">
+                <div class="ratio ratio-16x9">
+                    <video controls class="rounded">
+                        <source src="{{ game.video_url }}" type="video/mp4">
+                        Tu navegador no soporta el elemento de video.
+                    </video>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Estadísticas técnicas -->
+    <div class="card mt-5">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-bar me-2"></i>Información Técnica
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>RAWG ID:</strong> {{ game.rawg_id }}</p>
+                    <p><strong>Capturas analizadas:</strong> {{ game.screenshot_set.count }}</p>
+                    {% if game.gif_path %}
+                        <p><strong>GIF generado:</strong> <i class="fas fa-check text-success"></i></p>
+                    {% else %}
+                        <p><strong>GIF generado:</strong> <i class="fas fa-times text-danger"></i></p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Procesamiento IA:</strong>
+                        {% if game.screenshot_set.all %}
+                            <span class="badge bg-success">Completado</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pendiente</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Total capturas:</strong>
+                        {{ game.screenshot_set.count }} disponibles
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="text-center mt-5">
+        <a href="{% url 'test_rawg_view' %}" class="btn btn-primary btn-lg me-3">
+            <i class="fas fa-refresh me-2"></i>Generar Otro Juego
+        </a>
+        <button class="btn btn-outline-secondary btn-lg" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Imprimir Resultados
+        </button>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Mejorar experiencia de carga de imágenes
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('.screenshot-img');
+        images.forEach(img => {
+            img.addEventListener('load', function() {
+                this.style.opacity = '1';
+            });
+            img.style.opacity = '0.7';
+            img.style.transition = 'opacity 0.3s ease';
+        });
+    });
+</script>
 
 </body>
 </html>
