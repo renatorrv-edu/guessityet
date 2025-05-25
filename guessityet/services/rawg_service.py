@@ -4,7 +4,10 @@ import os
 from django.conf import settings
 from datetime import datetime
 from django.utils import timezone
-from guessityet.models import Game, Screenshot, DailyGame  # TODO: *?
+from PIL import Image, ImageFilter, ImageEnhance
+from io import BytesIO
+import uuid
+from guessityet.models import Game, Screenshot  # TODO: *?
 
 
 class RAWGService:
@@ -20,7 +23,7 @@ class RAWGService:
         params = {
             "key": self.api_key,
             "search": query,
-            page_size: page_size,
+            "page_size": page_size,
         }
 
         response = requests.get(endpoint, params=params)
@@ -40,28 +43,22 @@ class RAWGService:
         return None
 
     def get_game_screenshots(self, rawg_id):
-        """Obtener capturas de pantalla del juego seleccionado por ID"""
-
         endpoint = f"{self.BASE_URL}/games/{rawg_id}/screenshots"
         params = {"key": self.api_key}
-
         response = requests.get(endpoint, params=params)
 
         if response.status_code == 200:
-            return response.json()
+            return response.json().get("results", [])
 
         return []
 
     def get_game_videos(self, rawg_id):
-        """Obtener vídeo del juego seleccionado por ID. Última pista"""
-
         endpoint = f"{self.BASE_URL}/games/{rawg_id}/movies"
         params = {"key": self.api_key}
-
         response = requests.get(endpoint, params=params)
 
         if response.status_code == 200:
-            return response.json()
+            return response.json().get("results", [])
 
         return []
 
@@ -156,7 +153,7 @@ class RAWGService:
 
         for i, screenshot in enumerate(selected_screenshots, 1):
             Screenshot.objects.create(
-                game=game, image_url=screenshot["image"], difficulty_level=i
+                game=game, image_url=screenshot["image"], difficulty=i
             )
 
         return game
