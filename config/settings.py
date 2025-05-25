@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "guessityet.apps.GuessityetConfig",
     "django_celery_beat",
+    "bootstrap5",
 ]
 
 MIDDLEWARE = [
