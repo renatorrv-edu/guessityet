@@ -14,6 +14,7 @@ class Game(models.Model):
     platforms = models.CharField(max_length=255, null=True, blank=True)
     metacritic = models.IntegerField(null=True, blank=True)
     video_url = models.URLField(null=True, blank=True)
+    gif_path = models.CharField(max_length=500, null=True, blank=True)
     # Fecha en la que se usó en el juego diario
     used_date = models.DateField(null=True, blank=True)
 

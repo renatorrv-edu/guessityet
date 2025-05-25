@@ -131,9 +131,19 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# API Keys
 RAWG_API_KEY = os.getenv("RAWG_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+
+# Media files (uploaded files)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+os.makedirs(MEDIA_ROOT / "game_gifs", exist_ok=True)
+os.makedirs(MEDIA_ROOT / "processed_screenshots", exist_ok=True)
