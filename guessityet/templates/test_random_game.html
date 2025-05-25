@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ game.title }} - GuessItYet Test</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .game-info-card {
@@ -62,12 +64,21 @@
             padding: 2rem;
             background: #f8f9fa;
             border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .video-container {
             margin: 2rem 0;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .no-video-alert {
+            background: linear-gradient(135deg, #fd9644 0%, #f7971e 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .progress-indicator {
             background: rgba(255,255,255,0.1);
@@ -92,6 +103,41 @@
         .step-3 { background: #ffc107; color: #000; }
         .step-4 { background: #28a745; }
         .step-5 { background: #6f42c1; }
+        .step-6 { background: #17a2b8; }
+
+        /* Estilos especiales para la captura 6 */
+        .screenshot-card.border-primary {
+            border: 2px solid #0d6efd !important;
+            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.2) !important;
+        }
+
+        .screenshot-card.border-primary:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(13, 110, 253, 0.3) !important;
+        }
+
+        .screenshot-card .bg-light {
+            background-color: rgba(13, 110, 253, 0.05) !important;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .feature-available {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .feature-unavailable {
+            color: #dc3545;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -130,9 +176,50 @@
                         <div class="step-circle step-3">3</div>
                         <div class="step-circle step-4">4</div>
                         <div class="step-circle step-5">5</div>
+                        {% if not game.video_url %}
+                            <div class="step-circle step-6">6</div>
+                        {% endif %}
                     </div>
-                    <small class="d-block mt-2">Muy Difícil → Muy Fácil</small>
+                    <small class="d-block mt-2">
+                        Muy Difícil → Muy Fácil
+                        {% if not game.video_url %}
+                            <br><span class="badge bg-info">+1 captura extra (sin vídeo)</span>
+                        {% endif %}
+                    </small>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de características disponibles -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-image fa-2x mb-2"></i>
+                <h5>Capturas</h5>
+                <p class="feature-available">{{ game.screenshot_set.count }} disponibles</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-film fa-2x mb-2"></i>
+                <h5>GIF Animado</h5>
+                {% if game.gif_path %}
+                    <p class="feature-available"><i class="fas fa-check"></i> Disponible</p>
+                {% else %}
+                    <p class="feature-unavailable"><i class="fas fa-times"></i> No disponible</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-play fa-2x mb-2"></i>
+                <h5>Vídeo Original</h5>
+                {% if game.video_url %}
+                    <p class="feature-available"><i class="fas fa-check"></i> Disponible</p>
+                {% else %}
+                    <p class="feature-unavailable"><i class="fas fa-times"></i> No disponible</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -141,7 +228,7 @@
     {% if game.gif_path %}
         <div class="gif-container">
             <h3 class="mb-4">
-                <i class="fas fa-film me-2"></i>GIF del juego (10 segundos a 15 FPS)
+                <i class="fas fa-film me-2"></i>GIF del juego (10 segundos a 30 FPS)
             </h3>
             <img src="/media/{{ game.gif_path }}"
                  alt="GIF del juego {{ game.title }}"
@@ -151,6 +238,16 @@
                 <i class="fas fa-robot me-1"></i>Procesado automáticamente desde el vídeo original
             </p>
         </div>
+    {% else %}
+        <!-- Mensaje cuando no hay GIF disponible -->
+        <div class="no-video-alert text-white text-center">
+            <i class="fas fa-info-circle fa-3x mb-3"></i>
+            <h4>Solo capturas de pantalla disponibles</h4>
+            <p class="mb-0">
+                Este juego no tiene vídeo disponible, pero cuenta con capturas de pantalla
+                analizadas por IA para una experiencia de adivinanza desafiante.
+            </p>
+        </div>
     {% endif %}
 
     <!-- Capturas de pantalla procesadas por IA -->
@@ -158,29 +255,62 @@
         <div class="col-12">
             <h3 class="mb-4">
                 <i class="fas fa-brain me-2"></i>Capturas Analizadas por IA
-                <small class="text-muted">(Ordenadas por dificultad de adivinanza)</small>
+                <small class="text-muted">
+                    (Ordenadas por dificultad de adivinanza -
+                    {% if game.video_url %}
+                        5 capturas estándar
+                    {% else %}
+                        <span class="badge bg-info">6 capturas - Sin vídeo</span>
+                    {% endif %})
+                </small>
             </h3>
         </div>
     </div>
 
     {% if game.screenshot_set.all %}
+        {% if not game.video_url and game.screenshot_set.count == 6 %}
+            <!-- Alerta especial para juegos con 6 capturas -->
+            <div class="alert alert-primary mb-4" role="alert">
+                <h5 class="alert-heading">
+                    <i class="fas fa-images me-2"></i>Captura Extra Disponible
+                </h5>
+                <p class="mb-0">
+                    Este juego incluye una <strong>sexta captura (Súper Fácil)</strong> para compensar
+                    la ausencia de vídeo. ¡Tendrás una pista adicional si las primeras 5 no son suficientes!
+                </p>
+            </div>
+        {% endif %}
+
         <div class="row">
             {% for screenshot in game.screenshot_set.all %}
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="screenshot-card card h-100">
+                    <div class="screenshot-card card h-100
+                        {% if screenshot.difficulty == 6 %}border-primary border-2{% endif %}">
+
+                        {% if screenshot.difficulty == 6 %}
+                            <!-- Badge especial para la captura 6 -->
+                            <div class="position-absolute top-0 start-0 w-100 text-center pt-2">
+                                <span class="badge bg-primary px-3 py-2">
+                                    <i class="fas fa-gift me-1"></i>CAPTURA EXTRA
+                                </span>
+                            </div>
+                        {% endif %}
+
                         <!-- Badge de dificultad -->
                         <div class="difficulty-badge
                             {% if screenshot.difficulty == 1 %}badge bg-danger
                             {% elif screenshot.difficulty == 2 %}badge bg-warning
                             {% elif screenshot.difficulty == 3 %}badge bg-info
                             {% elif screenshot.difficulty == 4 %}badge bg-success
-                            {% else %}badge bg-secondary
+                            {% elif screenshot.difficulty == 5 %}badge bg-secondary
+                            {% else %}badge bg-primary
                             {% endif %}">
                             Nivel {{ screenshot.difficulty }}
                         </div>
 
                         <!-- Contenedor de imagen -->
-                        <div class="screenshot-container">
+                        <div class="screenshot-container
+                            {% if screenshot.difficulty == 6 %}border-primary{% endif %}">
                             {% if screenshot.local_path %}
                                 <!-- Imagen procesada con zoom por IA -->
                                 <img src="/media/{{ screenshot.local_path }}"
@@ -195,7 +325,7 @@
                         </div>
 
                         <!-- Información de la captura -->
-                        <div class="card-body">
+                        <div class="card-body {% if screenshot.difficulty == 6 %}bg-light{% endif %}">
                             <h6 class="card-title">
                                 {% if screenshot.difficulty == 1 %}
                                     <i class="fas fa-fire text-danger me-2"></i>Muy Difícil
@@ -205,10 +335,20 @@
                                     <i class="fas fa-balance-scale text-info me-2"></i>Intermedio
                                 {% elif screenshot.difficulty == 4 %}
                                     <i class="fas fa-thumbs-up text-success me-2"></i>Fácil
-                                {% else %}
+                                {% elif screenshot.difficulty == 5 %}
                                     <i class="fas fa-check-circle text-secondary me-2"></i>Muy Fácil
+                                {% else %}
+                                    <i class="fas fa-star text-primary me-2"></i>Súper Fácil
+                                    <span class="badge bg-primary ms-2">EXTRA</span>
                                 {% endif %}
                             </h6>
+
+                            {% if screenshot.difficulty == 6 %}
+                                <p class="small text-muted mb-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Esta captura adicional está disponible solo porque el juego no tiene vídeo.
+                                </p>
+                            {% endif %}
 
                             <div class="d-flex justify-content-between align-items-center">
                                 {% if screenshot.local_path %}
@@ -222,7 +362,10 @@
                                 {% endif %}
 
                                 <small class="text-muted">
-                                    #{{ screenshot.difficulty }}/5
+                                    #{{ screenshot.difficulty }}/{% if game.video_url %}5{% else %}6{% endif %}
+                                    {% if screenshot.difficulty == 6 %}
+                                        <i class="fas fa-gift text-primary ms-1"></i>
+                                    {% endif %}
                                 </small>
                             </div>
                         </div>
@@ -243,12 +386,22 @@
                 <li><strong>Nivel 1 (Muy Difícil):</strong> Zoom extremo en áreas poco reveladoras</li>
                 <li><strong>Nivel 2 (Difícil):</strong> Zoom alto mostrando detalles limitados</li>
                 <li><strong>Nivel 3 (Intermedio):</strong> Zoom moderado con algunas pistas</li>
-                <li><strong>Nivel 4 (Fácil):</strong> Zoom ligero mostrando más contexto</li>
-                <li><strong>Nivel 5 (Muy Fácil):</strong> Imagen completa con elementos distintivos</li>
+                <li><strong>Nivel 4 (Fácil):</strong> Imagen completa con filtro mínimo</li>
+                <li><strong>Nivel 5 (Muy Fácil):</strong> Imagen completa sin modificaciones</li>
+                {% if not game.video_url %}
+                    <li><strong>Nivel 6 (Súper Fácil):</strong> Imagen completa adicional sin modificaciones</li>
+                {% endif %}
             </ul>
             <p class="mb-0">
                 <i class="fas fa-lightbulb me-1"></i>
-                La IA evita capturas con logos obvios o demasiado abstractas, seleccionando las 5 mejores de hasta 10 disponibles.
+                La IA evita capturas con logos obvios o demasiado abstractas, seleccionando las
+                {% if game.video_url %}5{% else %}6{% endif %} mejores de hasta 10 disponibles.
+                {% if not game.video_url %}
+                    <strong>Los juegos sin vídeo reciben una captura adicional para compensar la falta de contenido audiovisual.</strong>
+                {% endif %}
+                <br>
+                <i class="fas fa-search me-1"></i>
+                <strong>Sistema de zoom:</strong> Solo los primeros 3 niveles usan zoom. Los niveles 4+ muestran la imagen completa para facilitar la identificación.
             </p>
         </div>
 
@@ -273,6 +426,23 @@
                     </video>
                 </div>
             </div>
+            <p class="text-muted text-center mt-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Vídeo oficial obtenido de RAWG.io
+            </p>
+        </div>
+    {% else %}
+        <!-- Información cuando no hay vídeo -->
+        <div class="mt-5">
+            <div class="alert alert-secondary" role="alert">
+                <h5 class="alert-heading">
+                    <i class="fas fa-video-slash me-2"></i>Vídeo no disponible
+                </h5>
+                <p class="mb-0">
+                    Este juego no tiene vídeo promocional disponible en la base de datos de RAWG.io.
+                    <strong>El desafío se basa únicamente en las capturas de pantalla analizadas por IA.</strong>
+                </p>
+            </div>
         </div>
     {% endif %}
 
@@ -287,14 +457,28 @@
             <div class="row">
                 <div class="col-md-6">
                     <p><strong>RAWG ID:</strong> {{ game.rawg_id }}</p>
-                    <p><strong>Capturas analizadas:</strong> {{ game.screenshot_set.count }}</p>
-                    {% if game.gif_path %}
-                        <p><strong>GIF generado:</strong> <i class="fas fa-check text-success"></i></p>
-                    {% else %}
-                        <p><strong>GIF generado:</strong> <i class="fas fa-times text-danger"></i></p>
-                    {% endif %}
+                    <p><strong>Capturas analizadas:</strong>
+                        {{ game.screenshot_set.count }}
+                        {% if not game.video_url and game.screenshot_set.count == 6 %}
+                            <span class="badge bg-primary ms-2">+1 Extra</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>GIF generado:</strong>
+                        {% if game.gif_path %}
+                            <span class="feature-available"><i class="fas fa-check"></i> Sí</span>
+                        {% else %}
+                            <span class="feature-unavailable"><i class="fas fa-times"></i> No</span>
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="col-md-6">
+                    <p><strong>Vídeo disponible:</strong>
+                        {% if game.video_url %}
+                            <span class="feature-available"><i class="fas fa-check"></i> Sí</span>
+                        {% else %}
+                            <span class="feature-unavailable"><i class="fas fa-times"></i> No</span>
+                        {% endif %}
+                    </p>
                     <p><strong>Procesamiento IA:</strong>
                         {% if game.screenshot_set.all %}
                             <span class="badge bg-success">Completado</span>
@@ -302,11 +486,31 @@
                             <span class="badge bg-warning">Pendiente</span>
                         {% endif %}
                     </p>
-                    <p><strong>Total capturas:</strong>
-                        {{ game.screenshot_set.count }} disponibles
+                    <p><strong>Dificultad estimada:</strong>
+                        {% if not game.video_url and not game.gif_path %}
+                            {% if game.screenshot_set.count == 6 %}
+                                <span class="badge bg-warning">Media (6 capturas)</span>
+                            {% else %}
+                                <span class="badge bg-danger">Alta (Solo capturas)</span>
+                            {% endif %}
+                        {% elif game.gif_path %}
+                            <span class="badge bg-success">Normal (Con GIF)</span>
+                        {% else %}
+                            <span class="badge bg-warning">Media (Con vídeo)</span>
+                        {% endif %}
                     </p>
                 </div>
             </div>
+
+            <!-- Nota especial para juegos sin vídeo -->
+            {% if not game.video_url %}
+                <div class="alert alert-info mt-3 mb-0" role="alert">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Nota:</strong> Este juego fue seleccionado a pesar de no tener vídeo disponible.
+                    Nuestro algoritmo de selección prioriza juegos con vídeos, pero también incluye
+                    juegos de alta calidad que solo tienen capturas de pantalla excepcionales.
+                </div>
+            {% endif %}
         </div>
     </div>
 
@@ -334,6 +538,18 @@
             img.style.opacity = '0.7';
             img.style.transition = 'opacity 0.3s ease';
         });
+
+        // Mostrar información contextual según disponibilidad de contenido
+        const hasGif = {{ game.gif_path|yesno:"true,false" }};
+        const hasVideo = {{ game.video_url|yesno:"true,false" }};
+
+        if (!hasVideo && !hasGif) {
+            console.log('🎮 Juego de solo capturas - Dificultad alta');
+        } else if (hasGif) {
+            console.log('🎬 Juego con GIF - Experiencia completa');
+        } else {
+            console.log('📹 Juego con vídeo - Sin GIF procesado');
+        }
     });
 </script>
 

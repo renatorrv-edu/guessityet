@@ -312,8 +312,15 @@ class RAWGService:
                     except:
                         pass
 
-    def select_random_game(self):
-        """Seleccionar juego aleatorio con verificación optimizada"""
+    def select_random_game(self, max_iterations=10):
+        """
+        Seleccionar juego aleatorio con análisis por tandas y priorización inteligente
+
+        Lógica de priorización:
+        1. Juegos con ≥6 capturas + vídeos (ordenados por Metacritic desc)
+        2. Juegos con ≥6 capturas sin vídeos (ordenados por Metacritic desc)
+        3. Si ninguno cumple, continuar con siguiente tanda
+        """
 
         endpoint = f"{self.BASE_URL}/games"
         used_games_ids = set(
@@ -322,7 +329,13 @@ class RAWGService:
             )
         )
 
-        for _ in range(5):
+        print(f"🎮 Iniciando búsqueda de juego aleatorio...")
+        print(f"📝 Juegos ya utilizados: {len(used_games_ids)}")
+
+        for iteration in range(max_iterations):
+            print(f"\n🔍 Iteración {iteration + 1}/{max_iterations}")
+
+            # Generar parámetros aleatorios para esta búsqueda
             start_year = random.randint(1980, 2020)
             end_year = start_year + random.randint(3, 7)
 
@@ -334,71 +347,464 @@ class RAWGService:
                 "dates": f"{start_year}-01-01,{end_year}-12-31",
             }
 
-            response = requests.get(endpoint, params=params)
+            print(f"📅 Buscando juegos: {start_year}-{end_year}")
 
-            if response.status_code == 200:
+            try:
+                response = requests.get(endpoint, params=params, timeout=15)
+
+                if response.status_code != 200:
+                    print(f"❌ Error en API: {response.status_code}")
+                    continue
+
                 games = response.json().get("results", [])
                 available_games = [g for g in games if g["id"] not in used_games_ids]
 
-                # Barajar para probar en orden aleatorio
-                random.shuffle(available_games)
+                if not available_games:
+                    print("⚠️ No hay juegos disponibles en esta búsqueda")
+                    continue
 
-                for game_data in available_games[:10]:  # Solo probar primeros 10
-                    rawg_id = game_data["id"]
+                # Seleccionar 5 juegos aleatorios para analizar
+                games_to_analyze = random.sample(
+                    available_games, min(5, len(available_games))
+                )
 
-                    print(f"Verificando juego: {game_data.get('name')} (ID: {rawg_id})")
+                print(f"🎯 Analizando {len(games_to_analyze)} juegos candidatos...")
 
-                    # Verificación rápida: obtener detalles (1 llamada que nos da todo)
-                    game_details = self.get_game_details(rawg_id)
-                    if not game_details:
-                        continue
+                # Analizar cada juego y clasificarlo
+                candidates = self._analyze_game_candidates(games_to_analyze)
 
-                    screenshots_count = game_details.get("screenshots_count", 0)
+                if not candidates:
+                    print("⚠️ Ningún juego cumple los requisitos mínimos")
+                    continue
 
-                    if screenshots_count < 5:
-                        print(f"  Descartado: solo {screenshots_count} capturas")
-                        continue
+                # Seleccionar el mejor candidato según priorización
+                selected_game = self._select_best_candidate(candidates)
 
-                    # Verificar vídeos
-                    videos = self.get_game_videos(rawg_id)
-                    if not videos:
-                        print(f"  Descartado: sin vídeos")
-                        continue
-
+                if selected_game:
                     print(
-                        f"  Seleccionado: {screenshots_count} capturas, {len(videos)} vídeos"
+                        f"✅ Juego seleccionado: {selected_game['name']} (ID: {selected_game['id']})"
                     )
-                    return self.process_selected_game(rawg_id)
+                    print(f"📊 Capturas: {selected_game.get('screenshots_count', 0)}")
+                    print(
+                        f"🎬 Vídeos: {'Sí' if selected_game.get('has_videos') else 'No'}"
+                    )
+                    print(f"⭐ Metacritic: {selected_game.get('metacritic', 'N/A')}")
+
+                    return self.process_selected_game(selected_game["id"])
+
+            except requests.RequestException as e:
+                print(f"❌ Error en petición: {e}")
+                continue
+            except Exception as e:
+                print(f"❌ Error inesperado: {e}")
+                continue
+
+        print(
+            f"❌ No se encontró ningún juego válido después de {max_iterations} iteraciones"
+        )
+        return None
+
+    def _analyze_game_candidates(self, games_data):
+        """
+        Analizar una lista de juegos candidatos y obtener información detallada
+
+        Returns:
+            list: Lista de juegos con información completa para priorización
+        """
+        candidates = []
+
+        for game_data in games_data:
+            rawg_id = game_data["id"]
+            game_name = game_data.get("name", "Desconocido")
+
+            print(f"  🔍 Analizando: {game_name} (ID: {rawg_id})")
+
+            try:
+                # Obtener detalles completos del juego
+                game_details = self.get_game_details(rawg_id)
+                if not game_details:
+                    print(f"    ❌ No se pudieron obtener detalles")
+                    continue
+
+                screenshots_count = game_details.get("screenshots_count", 0)
+                metacritic_score = game_details.get("metacritic")
+
+                # Verificar si tiene al menos 6 capturas
+                if screenshots_count < 6:
+                    print(f"    ❌ Solo {screenshots_count} capturas (mínimo 6)")
+                    continue
+
+                # Verificar vídeos - CAMBIO: No descartar por falta de vídeos
+                videos = self.get_game_videos(rawg_id)
+                has_videos = len(videos) > 0
+
+                # Crear candidato con información completa
+                candidate = {
+                    **game_details,  # Incluir todos los detalles del juego
+                    "screenshots_count": screenshots_count,
+                    "has_videos": has_videos,
+                    "video_count": len(videos),
+                    "metacritic": metacritic_score,
+                    "priority_score": self._calculate_priority_score(
+                        screenshots_count, has_videos, metacritic_score
+                    ),
+                }
+
+                candidates.append(candidate)
+
+                print(
+                    f"    ✅ Válido - Capturas: {screenshots_count}, Vídeos: {len(videos)}, Metacritic: {metacritic_score}"
+                )
+
+            except Exception as e:
+                print(f"    ❌ Error analizando {game_name}: {e}")
+                continue
+
+        print(f"🎯 Candidatos válidos encontrados: {len(candidates)}")
+        return candidates
+
+    def _calculate_priority_score(
+        self, screenshots_count, has_videos, metacritic_score
+    ):
+        """
+        Calcular puntuación de prioridad para un juego
+
+        Lógica:
+        - Base: puntuación Metacritic (0-100)
+        - Bonus por vídeos: +200 puntos
+        - Bonus por capturas extra: +10 por cada captura sobre 6
+        """
+        score = metacritic_score or 50  # Usar 50 como base si no hay puntuación
+
+        if has_videos:
+            score += 200  # Gran bonus por tener vídeos
+
+        if screenshots_count > 6:
+            score += (screenshots_count - 6) * 10  # Bonus por capturas extra
+
+        return score
+
+    def _select_best_candidate(self, candidates):
+        """
+        Seleccionar el mejor candidato según la lógica de priorización
+
+        Priority order:
+        1. Juegos con vídeos (ordenados por priority_score desc)
+        2. Juegos sin vídeos (ordenados por priority_score desc)
+        """
+        if not candidates:
+            return None
+
+        # Separar candidatos con y sin vídeos
+        with_videos = [c for c in candidates if c.get("has_videos", False)]
+        without_videos = [c for c in candidates if not c.get("has_videos", False)]
+
+        print(f"📊 Candidatos con vídeos: {len(with_videos)}")
+        print(f"📊 Candidatos sin vídeos: {len(without_videos)}")
+
+        # Prioridad 1: Juegos con vídeos
+        if with_videos:
+            # Ordenar por priority_score descendente
+            with_videos.sort(key=lambda x: x.get("priority_score", 0), reverse=True)
+            best = with_videos[0]
+            print(
+                f"🏆 Seleccionado (con vídeos): {best['name']} - Score: {best.get('priority_score', 0)}"
+            )
+            return best
+
+        # Prioridad 2: Juegos sin vídeos
+        if without_videos:
+            # Ordenar por priority_score descendente
+            without_videos.sort(key=lambda x: x.get("priority_score", 0), reverse=True)
+            best = without_videos[0]
+            print(
+                f"🥈 Seleccionado (sin vídeos): {best['name']} - Score: {best.get('priority_score', 0)}"
+            )
+            return best
+
+        return None
+
+    def _analyze_game_candidates(self, games_data):
+        """
+        Analizar una lista de juegos candidatos y obtener información detallada
+
+        Returns:
+            list: Lista de juegos con información completa para priorización
+        """
+        candidates = []
+
+        for game_data in games_data:
+            rawg_id = game_data["id"]
+            game_name = game_data.get("name", "Desconocido")
+
+            print(f"  🔍 Analizando: {game_name} (ID: {rawg_id})")
+
+            try:
+                # Obtener detalles completos del juego
+                game_details = self.get_game_details(rawg_id)
+                if not game_details:
+                    print(f"    ❌ No se pudieron obtener detalles")
+                    continue
+
+                screenshots_count = game_details.get("screenshots_count", 0)
+                metacritic_score = game_details.get("metacritic")
+
+                # Verificar si tiene al menos 6 capturas
+                if screenshots_count < 6:
+                    print(f"    ❌ Solo {screenshots_count} capturas (mínimo 6)")
+                    continue
+
+                # Verificar vídeos
+                videos = self.get_game_videos(rawg_id)
+                has_videos = len(videos) > 0
+
+                # Crear candidato con información completa
+                candidate = {
+                    **game_details,  # Incluir todos los detalles del juego
+                    "screenshots_count": screenshots_count,
+                    "has_videos": has_videos,
+                    "video_count": len(videos),
+                    "metacritic": metacritic_score,
+                    "priority_score": self._calculate_priority_score(
+                        screenshots_count, has_videos, metacritic_score
+                    ),
+                }
+
+                candidates.append(candidate)
+
+                print(
+                    f"    ✅ Válido - Capturas: {screenshots_count}, Vídeos: {len(videos)}, Metacritic: {metacritic_score}"
+                )
+
+            except Exception as e:
+                print(f"    ❌ Error analizando {game_name}: {e}")
+                continue
+
+        print(f"🎯 Candidatos válidos encontrados: {len(candidates)}")
+        return candidates
+
+    def _calculate_priority_score(
+        self, screenshots_count, has_videos, metacritic_score
+    ):
+        """
+        Calcular puntuación de prioridad para un juego
+
+        Lógica:
+        - Base: puntuación Metacritic (0-100)
+        - Bonus por vídeos: +200 puntos
+        - Bonus por capturas extra: +10 por cada captura sobre 6
+        """
+        score = metacritic_score or 50  # Usar 50 como base si no hay puntuación
+
+        if has_videos:
+            score += 200  # Gran bonus por tener vídeos
+
+        if screenshots_count > 6:
+            score += (screenshots_count - 6) * 10  # Bonus por capturas extra
+
+        return score
+
+    def _select_best_candidate(self, candidates):
+        """
+        Seleccionar el mejor candidato según la lógica de priorización
+
+        Priority order:
+        1. Juegos con vídeos (ordenados por priority_score desc)
+        2. Juegos sin vídeos (ordenados por priority_score desc)
+        """
+        if not candidates:
+            return None
+
+        # Separar candidatos con y sin vídeos
+        with_videos = [c for c in candidates if c.get("has_videos", False)]
+        without_videos = [c for c in candidates if not c.get("has_videos", False)]
+
+        print(f"📊 Candidatos con vídeos: {len(with_videos)}")
+        print(f"📊 Candidatos sin vídeos: {len(without_videos)}")
+
+        # Prioridad 1: Juegos con vídeos
+        if with_videos:
+            # Ordenar por priority_score descendente
+            with_videos.sort(key=lambda x: x.get("priority_score", 0), reverse=True)
+            best = with_videos[0]
+            print(
+                f"🏆 Seleccionado (con vídeos): {best['name']} - Score: {best.get('priority_score', 0)}"
+            )
+            return best
+
+        # Prioridad 2: Juegos sin vídeos
+        if without_videos:
+            # Ordenar por priority_score descendente
+            without_videos.sort(key=lambda x: x.get("priority_score", 0), reverse=True)
+            best = without_videos[0]
+            print(
+                f"🥈 Seleccionado (sin vídeos): {best['name']} - Score: {best.get('priority_score', 0)}"
+            )
+            return best
+
+        return None
+
+    def _analyze_game_candidates(self, games_data):
+        """
+        Analizar una lista de juegos candidatos y obtener información detallada
+
+        Returns:
+            list: Lista de juegos con información completa para priorización
+        """
+        candidates = []
+
+        for game_data in games_data:
+            rawg_id = game_data["id"]
+            game_name = game_data.get("name", "Desconocido")
+
+            print(f"  🔍 Analizando: {game_name} (ID: {rawg_id})")
+
+            try:
+                # Obtener detalles completos del juego
+                game_details = self.get_game_details(rawg_id)
+                if not game_details:
+                    print(f"    ❌ No se pudieron obtener detalles")
+                    continue
+
+                screenshots_count = game_details.get("screenshots_count", 0)
+                metacritic_score = game_details.get("metacritic")
+
+                # Verificar si tiene al menos 6 capturas
+                if screenshots_count < 6:
+                    print(f"    ❌ Solo {screenshots_count} capturas (mínimo 6)")
+                    continue
+
+                # Verificar vídeos
+                videos = self.get_game_videos(rawg_id)
+                has_videos = len(videos) > 0
+
+                # Crear candidato con información completa
+                candidate = {
+                    **game_details,  # Incluir todos los detalles del juego
+                    "screenshots_count": screenshots_count,
+                    "has_videos": has_videos,
+                    "video_count": len(videos),
+                    "metacritic": metacritic_score,
+                    "priority_score": self._calculate_priority_score(
+                        screenshots_count, has_videos, metacritic_score
+                    ),
+                }
+
+                candidates.append(candidate)
+
+                print(
+                    f"    ✅ Válido - Capturas: {screenshots_count}, Vídeos: {len(videos)}, Metacritic: {metacritic_score}"
+                )
+
+            except Exception as e:
+                print(f"    ❌ Error analizando {game_name}: {e}")
+                continue
+
+        print(f"🎯 Candidatos válidos encontrados: {len(candidates)}")
+        return candidates
+
+    def _calculate_priority_score(
+        self, screenshots_count, has_videos, metacritic_score
+    ):
+        """
+        Calcular puntuación de prioridad para un juego
+
+        Lógica:
+        - Base: puntuación Metacritic (0-100)
+        - Bonus por vídeos: +200 puntos
+        - Bonus por capturas extra: +10 por cada captura sobre 6
+        """
+        score = metacritic_score or 50  # Usar 50 como base si no hay puntuación
+
+        if has_videos:
+            score += 200  # Gran bonus por tener vídeos
+
+        if screenshots_count > 6:
+            score += (screenshots_count - 6) * 10  # Bonus por capturas extra
+
+        return score
+
+    def _select_best_candidate(self, candidates):
+        """
+        Seleccionar el mejor candidato según la lógica de priorización
+
+        Priority order:
+        1. Juegos con vídeos (ordenados por priority_score desc)
+        2. Juegos sin vídeos (ordenados por priority_score desc)
+        """
+        if not candidates:
+            return None
+
+        # Separar candidatos con y sin vídeos
+        with_videos = [c for c in candidates if c.get("has_videos", False)]
+        without_videos = [c for c in candidates if not c.get("has_videos", False)]
+
+        print(f"📊 Candidatos con vídeos: {len(with_videos)}")
+        print(f"📊 Candidatos sin vídeos: {len(without_videos)}")
+
+        # Prioridad 1: Juegos con vídeos
+        if with_videos:
+            # Ordenar por priority_score descendente
+            with_videos.sort(key=lambda x: x.get("priority_score", 0), reverse=True)
+            best = with_videos[0]
+            print(
+                f"🏆 Seleccionado (con vídeos): {best['name']} - Score: {best.get('priority_score', 0)}"
+            )
+            return best
+
+        # Prioridad 2: Juegos sin vídeos
+        if without_videos:
+            # Ordenar por priority_score descendente
+            without_videos.sort(key=lambda x: x.get("priority_score", 0), reverse=True)
+            best = without_videos[0]
+            print(
+                f"🥈 Seleccionado (sin vídeos): {best['name']} - Score: {best.get('priority_score', 0)}"
+            )
+            return best
 
         return None
 
     def process_selected_game(self, rawg_id):
-        """Procesar el juego seleccionado. Obtener detalles, screenshots, vídeo y GIF"""
+        """
+        Procesar el juego seleccionado. Obtener detalles, screenshots, vídeo y GIF
+        CORREGIDO: Ahora maneja juegos sin vídeos correctamente
+        """
 
         game_details = self.get_game_details(rawg_id)
 
         if not game_details:
             return None
 
-        # Vídeo
+        # Vídeo - CAMBIO: Permitir juegos sin vídeos
         videos = self.get_game_videos(rawg_id)
+        video_url = ""
+        has_video = False
 
-        if not videos:
-            return None
+        if videos:
+            video_url = videos[0].get("data", {}).get("max", "")
+            has_video = True
+            print(f"🎬 Vídeo encontrado para {game_details['name']}")
+        else:
+            print(f"⚠️ No hay vídeos disponibles para {game_details['name']}")
 
-        video_url = videos[0].get("data", {}).get("max", "")
-
-        # Capturas de pantalla - Obtener hasta 20 para mejor análisis (solo llamar una vez)
+        # Capturas de pantalla - Obtener hasta 20 para mejor análisis
         screenshots = self.get_game_screenshots(rawg_id, max_screenshots=20)
         print(f"🔍 Obtenidas {len(screenshots)} capturas de RAWG API")
 
         if not screenshots:
+            print(f"❌ No hay capturas disponibles para {game_details['name']}")
             return None
 
-        # Limitar a máximo 10 capturas para análisis (seleccionará las mejores 5)
+        # Limitar a máximo 10 capturas para análisis
         screenshots_to_analyze = screenshots[:10]
+
+        # NUEVO: Determinar número de capturas según disponibilidad de vídeo
+        max_screenshots = 5 if has_video else 6
         print(
             f"📸 Total capturas obtenidas: {len(screenshots)}, analizando: {len(screenshots_to_analyze)}"
+        )
+        print(
+            f"🎯 Seleccionando {max_screenshots} mejores capturas ({'con vídeo' if has_video else 'sin vídeo - captura extra'})"
         )
 
         # Registrar juego en la base de datos
@@ -411,15 +817,14 @@ class RAWGService:
                 "genres": self.format_genres(game_details.get("genres", [])),
                 "platforms": self.format_platforms(game_details.get("platforms", [])),
                 "metacritic": game_details.get("metacritic"),
-                "video_url": video_url,
+                "video_url": video_url,  # Puede estar vacío
             },
         )
 
-        # Procesar vídeo y crear GIF con verificación de tamaño
+        # Procesar vídeo y crear GIF - SOLO si hay vídeo disponible
         if video_url:
-            # Verificar si el vídeo es procesable
+            print("🎬 Procesando vídeo para crear GIF...")
             if self.check_video_size(video_url):
-                print("Procesando vídeo para crear GIF...")
                 gif_path = self.download_and_convert_video_to_gif(video_url, game.id)
                 if gif_path:
                     game.gif_path = gif_path
@@ -429,6 +834,8 @@ class RAWGService:
                     print(f"❌ No se pudo crear GIF para: {game.title}")
             else:
                 print(f"⚠️ Vídeo demasiado grande para {game.title}, saltando GIF")
+        else:
+            print(f"📷 {game.title} solo tendrá capturas de pantalla (sin vídeo/GIF)")
 
         # Limpiar capturas anteriores
         Screenshot.objects.filter(game=game).delete()
@@ -454,28 +861,46 @@ class RAWGService:
             )
             difficulty_service = GameDifficultyService()
 
-            # Procesar capturas con IA para seleccionar las 5 mejores y organizarlas
+            # CAMBIO: Usar número variable de capturas según disponibilidad de vídeo
             success = difficulty_service.select_and_organize_best_screenshots(
-                game, max_screenshots=5
+                game, max_screenshots=max_screenshots
             )
 
             if success:
                 print(
-                    f"✅ Las 5 mejores capturas seleccionadas y organizadas para: {game.title}"
+                    f"✅ Las {max_screenshots} mejores capturas seleccionadas y organizadas para: {game.title}"
                 )
             else:
                 print(
                     f"⚠️ Error seleccionando capturas para: {game.title}, usando selección aleatoria"
                 )
-                self._fallback_random_selection(game, screenshots_to_analyze)
+                self._fallback_random_selection(
+                    game, screenshots_to_analyze, max_screenshots
+                )
 
         except ImportError:
             print(
                 "⚠️ Servicio de análisis de imágenes no disponible, usando capturas aleatorias"
             )
-            self._fallback_random_selection(game, screenshots_to_analyze)
+            self._fallback_random_selection(
+                game, screenshots_to_analyze, max_screenshots
+            )
 
         return game
+
+    def _fallback_random_selection(self, game, screenshots_data, max_screenshots=5):
+        """Método de respaldo: seleccionar capturas aleatorias según disponibilidad de vídeo"""
+
+        selected_screenshots = random.sample(
+            screenshots_data, min(max_screenshots, len(screenshots_data))
+        )
+
+        # Limpiar y recrear con selección aleatoria
+        Screenshot.objects.filter(game=game).delete()
+        for i, screenshot in enumerate(selected_screenshots, 1):
+            Screenshot.objects.create(
+                game=game, image_url=screenshot["image"], difficulty=i
+            )
 
     def _fallback_random_selection(self, game, screenshots_data):
         """Método de respaldo: seleccionar 5 capturas aleatorias"""

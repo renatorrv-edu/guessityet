@@ -448,6 +448,7 @@ Return ONLY a number between 0-100."""
     ) -> List[str]:
         """
         Crea versiones con zoom de una imagen para diferentes niveles de dificultad
+        ACTUALIZADO: Solo zoom en niveles 1-3, niveles 4+ sin zoom
         """
         try:
             # Descargar imagen original
@@ -456,42 +457,94 @@ Return ONLY a number between 0-100."""
 
             original_image = Image.open(BytesIO(response.content))
 
-            # Configuración de zoom por nivel de dificultad
+            # Nueva configuración de zoom - SOLO para los primeros 3 niveles
             zoom_configs = {
                 1: {
                     "zoom": 3.0,
                     "focus": "corner",
-                },  # Muy difícil - esquina con mucho zoom
-                2: {"zoom": 2.5, "focus": "edge"},  # Difícil - borde con zoom alto
+                    "description": "Muy difícil - esquina con mucho zoom",
+                },
+                2: {
+                    "zoom": 2.5,
+                    "focus": "edge",
+                    "description": "Difícil - borde con zoom alto",
+                },
                 3: {
                     "zoom": 2.0,
                     "focus": "interesting",
-                },  # Medio - área interesante con zoom medio
-                4: {"zoom": 1.5, "focus": "center"},  # Fácil - centro con poco zoom
-                5: {"zoom": 1.0, "focus": "full"},  # Muy fácil - imagen completa
+                    "description": "Medio - área interesante con zoom medio",
+                },
+                # CAMBIO: Niveles 4+ sin zoom, solo imagen completa
+                4: {
+                    "zoom": 1.0,
+                    "focus": "full",
+                    "description": "Fácil - imagen completa sin zoom",
+                },
+                5: {
+                    "zoom": 1.0,
+                    "focus": "full",
+                    "description": "Muy fácil - imagen completa sin zoom",
+                },
+                6: {
+                    "zoom": 1.0,
+                    "focus": "full",
+                    "description": "Súper fácil - imagen completa sin zoom",
+                },
             }
 
             config = zoom_configs.get(difficulty_level, zoom_configs[3])
 
+            print(f"Nivel {difficulty_level}: {config['description']}")
+
             if config["zoom"] == 1.0:
-                # Imagen completa, solo aplicar filtros sutiles
-                processed_image = self._apply_subtle_filter(original_image)
+                # Imagen completa - aplicar solo filtros muy sutiles o ninguno
+                if difficulty_level >= 5:
+                    # Niveles 5 y 6: imagen completamente original
+                    processed_image = original_image.copy()
+                    print(f"  → Imagen original sin modificaciones")
+                else:
+                    # Nivel 4: filtro muy sutil
+                    processed_image = self._apply_minimal_filter(original_image)
+                    print(f"  → Filtro mínimo aplicado")
             else:
-                # Crear versión con zoom
+                # Crear versión con zoom (niveles 1-3)
                 processed_image = self._create_zoomed_crop(
                     original_image, config["zoom"], config["focus"]
+                )
+                print(
+                    f"  → Zoom {config['zoom']}x aplicado con enfoque '{config['focus']}'"
                 )
 
             # Guardar imagen procesada
             processed_path = self._save_processed_image(
-                processed_image, game_id, difficulty_level, f"zoom_{config['zoom']}"
+                processed_image, game_id, difficulty_level, f"level_{difficulty_level}"
             )
 
             return [processed_path] if processed_path else []
 
         except Exception as e:
-            print(f"Error creando versión con zoom: {e}")
+            print(f"Error creando versión para nivel {difficulty_level}: {e}")
             return []
+
+    def _apply_minimal_filter(self, image: Image.Image) -> Image.Image:
+        """
+        Aplica filtros mínimos solo para el nivel 4 (para diferenciarlo ligeramente de los niveles 5-6)
+        """
+        # Solo un desenfoque muy ligero para suavizar píxeles pero mantener todos los detalles
+        filtered = image.filter(ImageFilter.GaussianBlur(radius=0.3))
+
+        # Reducir el contraste muy ligeramente
+        enhancer = ImageEnhance.Contrast(filtered)
+        filtered = enhancer.enhance(0.95)
+
+        return filtered
+
+    def _apply_subtle_filter(self, image: Image.Image) -> Image.Image:
+        """
+        DEPRECADO: Ya no se usa, reemplazado por _apply_minimal_filter
+        Mantenido para compatibilidad
+        """
+        return self._apply_minimal_filter(image)
 
     def _create_zoomed_crop(
         self, image: Image.Image, zoom_factor: float, focus_type: str
