@@ -539,13 +539,6 @@ Return ONLY a number between 0-100."""
 
         return filtered
 
-    def _apply_subtle_filter(self, image: Image.Image) -> Image.Image:
-        """
-        DEPRECADO: Ya no se usa, reemplazado por _apply_minimal_filter
-        Mantenido para compatibilidad
-        """
-        return self._apply_minimal_filter(image)
-
     def _create_zoomed_crop(
         self, image: Image.Image, zoom_factor: float, focus_type: str
     ) -> Image.Image:

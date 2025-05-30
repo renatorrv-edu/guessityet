@@ -19,9 +19,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect
+
+
+def redirect_to_game(request):
+    """Redirigir la página principal al juego diario"""
+    return redirect("daily_game")
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", redirect_to_game, name="home"),
     path("guessityet/", include("guessityet.urls")),
 ]
 

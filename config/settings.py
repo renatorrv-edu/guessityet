@@ -44,12 +44,9 @@ INSTALLED_APPS = [
     "guessityet.apps.GuessityetConfig",
     "django_celery_beat",
     "bootstrap5",
-    "rest_framework" "corsheaders",
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -58,17 +55,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
-REST_FRAMEWORK = {
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.permissions.AllowAny",
-    ]
-}
 
 ROOT_URLCONF = "config.urls"
 
@@ -146,9 +132,13 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# API Keys
-RAWG_API_KEY = os.getenv("RAWG_API_KEY")
+# API Keys - IGDB Configuration
+IGDB_CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
+IGDB_CLIENT_SECRET = os.getenv("IGDB_CLIENT_SECRET")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Mantener RAWG por compatibilidad temporal
+RAWG_API_KEY = os.getenv("RAWG_API_KEY")
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")

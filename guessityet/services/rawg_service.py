@@ -50,6 +50,51 @@ class RAWGService:
 
         return None
 
+    def extract_franchise_info(self, game_data):
+        """
+        Extraer información de franquicia usando solo el campo 'franchise' de RAWG
+        """
+        franchise_field = game_data.get("franchise")
+
+        if franchise_field and isinstance(franchise_field, dict):
+            franchise_name = franchise_field.get("name")
+            franchise_slug = franchise_field.get("slug")
+
+            if franchise_name and franchise_slug:
+                print(f"✅ Franquicia encontrada: {franchise_name} ({franchise_slug})")
+                return franchise_name, franchise_slug
+            else:
+                print("⚠️ Campo franchise existe pero está incompleto")
+        else:
+            print("ℹ️ No tiene campo franchise válido")
+
+        return None, None
+
+    def has_valid_franchise(self, game_data):
+        """
+        Verificar si un juego tiene un campo franchise válido
+        """
+        franchise_field = game_data.get("franchise")
+
+        if (
+            franchise_field
+            and isinstance(franchise_field, dict)
+            and franchise_field.get("name")
+            and franchise_field.get("slug")
+        ):
+            return True
+
+        return False
+
+    def get_franchise_for_game_id(self, rawg_id):
+        """
+        Obtener solo la información de franquicia para un juego específico
+        """
+        game_data = self.get_game_details(rawg_id)
+        if game_data:
+            return self.extract_franchise_info(game_data)
+        return None, None
+
     def get_game_screenshots(self, rawg_id, max_screenshots=20):
         """
         Obtener capturas de pantalla del juego seleccionado por ID
