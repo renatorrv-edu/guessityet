@@ -44,14 +44,14 @@ class GuessItYetGame {
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            zoomOverlay.style.left = (x - 50) + 'px';
-            zoomOverlay.style.top = (y - 50) + 'px';
-            zoomOverlay.style.width = '100px';
-            zoomOverlay.style.height = '100px';
+            zoomOverlay.style.left = (x - 35) + 'px';
+            zoomOverlay.style.top = (y - 35) + 'px';
+            zoomOverlay.style.width = '70px';
+            zoomOverlay.style.height = '70px';
             zoomOverlay.style.display = 'block';
 
-            const bgX = -(x - 50) * 2;
-            const bgY = -(y - 50) * 2;
+            const bgX = -(x - 35) * 1.5;
+            const bgY = -(y - 35) * 1.5;
             zoomOverlay.style.backgroundImage = `url(${screenshotImg.src})`;
             zoomOverlay.style.backgroundPosition = `${bgX}px ${bgY}px`;
             zoomOverlay.style.backgroundSize = `${screenshotImg.width * 2}px ${screenshotImg.height * 2}px`;
@@ -401,8 +401,8 @@ class GuessItYetGame {
                     if (i === this.currentViewingAttempt) {
                         circle.style.fontWeight = '900';
                         circle.style.textShadow = '0 0 2px rgba(0,0,0,0.5)';
-                        circle.style.transform = 'translateY(1px)';
-                        circle.style.fontSize = '16px';
+                        circle.style.transform = 'translateY(4px)';
+                        circle.style.fontSize = '18px';
                     } else {
                         circle.style.fontWeight = 'bold';
                         circle.style.textShadow = 'none';
@@ -678,9 +678,11 @@ class GuessItYetGame {
 
         for (let i = 1; i <= this.maxAttempts; i++) {
             const circle = document.getElementById(`attempt-${i}`);
-            if (circle && !circle.classList.contains('correct') && !circle.classList.contains('franchise')) {
+            if (circle && !circle.classList.contains('franchise')) {
                 circle.classList.remove('current', 'wrong', 'skipped');
                 circle.classList.add('correct');
+                circle.style.backgroundColor = '#28a745';
+                circle.style.borderColor = '#28a745';
                 circle.style.cursor = 'pointer';
             }
         }
