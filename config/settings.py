@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     "guessityet.apps.GuessityetConfig",
     "django_celery_beat",
     "bootstrap5",
+    "drf_spectacular",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -152,3 +154,19 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 os.makedirs(MEDIA_ROOT / "game_gifs", exist_ok=True)
 os.makedirs(MEDIA_ROOT / "processed_screenshots", exist_ok=True)
+
+# DRF Spectacular settings
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Guess It Yet?",
+    "DESCRIPTION": "Your project description",  # TODO: Rellenar
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
+# Rest Framework Settings
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}

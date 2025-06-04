@@ -12,13 +12,13 @@ class GuessItYetGame {
         this.selectedGame = null;
         this.currentAttempt = gameState.current_attempt || 1;
         this.maxAttempts = this.calculateMaxAttempts();
+        this.gameEnded = gameState.won || gameState.lost;
+        this.currentViewingAttempt = this.currentAttempt;
 
         this.init();
     }
 
     calculateMaxAttempts() {
-        // Si hay GIF disponible: 5 capturas + 1 GIF = 6 intentos
-        // Si no hay GIF: 6 capturas = 6 intentos
         const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
         const maxAttempts = hasGif ? 6 : Math.min(screenshots.length, 6);
 
@@ -33,13 +33,18 @@ class GuessItYetGame {
         console.log('⚙️ Configurando event listeners...');
         this.setupEventListeners();
         this.updateAttemptIndicators();
+        this.setupScreenshotNavigation();
         this.updateScreenshot();
         this.updateGameInfo();
+        this.loadExistingAttempts();
+        this.setupHistoryToggle();
         this.startCountdown();
 
-        // Si el juego ya terminó, deshabilitar controles
-        if (gameState.won || gameState.lost) {
+        if (this.gameEnded) {
             this.disableGameControls();
+            this.minimizeHistoryForEndedGame();
+        } else {
+            this.ensureHistoryVisible();
         }
 
         console.log('✅ Juego inicializado correctamente');
@@ -50,16 +55,23 @@ class GuessItYetGame {
         const submitBtn = document.getElementById('submit-btn');
         const skipBtn = document.getElementById('skip-btn');
 
-        console.log('🔍 Configurando búsqueda...', { searchInput, submitBtn, skipBtn });
+        console.log('🔍 Elementos encontrados:', {
+            searchInput: !!searchInput,
+            submitBtn: !!submitBtn,
+            skipBtn: !!skipBtn
+        });
 
         if (searchInput) {
+            console.log('📝 Configurando eventos de búsqueda...');
+
             searchInput.addEventListener('input', (e) => {
+                console.log('📝 Evento input disparado');
                 this.handleSearchInput(e);
             });
 
             searchInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && this.selectedGame) {
-                    console.log('⏎ Enter presionado, enviando respuesta');
+                    console.log('⏎ Enter presionado con juego seleccionado');
                     this.submitGuess();
                 }
             });
@@ -78,6 +90,8 @@ class GuessItYetGame {
                 console.log('🎯 Botón enviar clicked');
                 this.submitGuess();
             });
+        } else {
+            console.error('❌ No se encontró el botón de envío');
         }
 
         if (skipBtn) {
@@ -85,12 +99,218 @@ class GuessItYetGame {
                 console.log('⏭️ Botón saltar clicked');
                 this.skipTurn();
             });
+        } else {
+            console.error('❌ No se encontró el botón de saltar');
+        }
+    }
+
+    setupScreenshotNavigation() {
+        const screenshotContainer = document.querySelector('.screenshot-container');
+        if (!screenshotContainer) return;
+
+        // Crear controles de navegación
+        const navControls = document.createElement('div');
+        navControls.className = 'screenshot-nav-controls';
+        navControls.innerHTML = `
+            <button class="nav-btn prev-btn" id="prev-screenshot">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="nav-indicator" id="screenshot-indicator">1/${this.maxAttempts}</span>
+            <button class="nav-btn next-btn" id="next-screenshot">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+
+        screenshotContainer.appendChild(navControls);
+
+        // Añadir estilos inline
+        const style = document.createElement('style');
+        style.textContent = `
+            .screenshot-nav-controls {
+                position: absolute;
+                bottom: 15px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0,0,0,0.8);
+                padding: 8px 15px;
+                border-radius: 25px;
+                display: flex;
+                gap: 15px;
+                align-items: center;
+                z-index: 10;
+                backdrop-filter: blur(5px);
+            }
+            .nav-btn {
+                background: rgba(255,255,255,0.2);
+                border: none;
+                color: white;
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .nav-btn:hover:not(:disabled) {
+                background: rgba(255,255,255,0.4);
+                transform: scale(1.1);
+            }
+            .nav-btn:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+            .nav-indicator {
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+                min-width: 50px;
+                text-align: center;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Event listeners
+        document.getElementById('prev-screenshot').addEventListener('click', () => {
+            this.navigateScreenshot(-1);
+        });
+
+        document.getElementById('next-screenshot').addEventListener('click', () => {
+            this.navigateScreenshot(1);
+        });
+
+        this.updateNavigationControls();
+    }
+
+    navigateScreenshot(direction) {
+        const newAttempt = this.currentViewingAttempt + direction;
+        const maxAvailable = this.gameEnded ? this.maxAttempts : this.currentAttempt;
+
+        if (newAttempt >= 1 && newAttempt <= maxAvailable) {
+            this.currentViewingAttempt = newAttempt;
+            this.showScreenshotForAttempt(this.currentViewingAttempt);
+            this.updateNavigationControls();
+            this.updateGameInfoForViewing();
+            this.updateAttemptIndicators(); // Actualizar los indicadores para mostrar la negrita
+        }
+    }
+
+    showScreenshotForAttempt(attemptNum) {
+        const screenshotImg = document.getElementById('current-screenshot');
+        const contentIndicator = document.getElementById('content-type-indicator');
+
+        const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
+        const isLastAttempt = attemptNum === this.maxAttempts;
+
+        if (isLastAttempt && hasGif) {
+            if (screenshotImg) {
+                screenshotImg.src = `/media/${gameData.gif_path}`;
+                screenshotImg.alt = 'GIF del juego';
+            }
+            if (contentIndicator) {
+                contentIndicator.style.display = 'block';
+            }
+        } else {
+            const screenshot = screenshots.find(s => s.difficulty === attemptNum);
+            if (screenshot && screenshotImg) {
+                screenshotImg.src = screenshot.url;
+                screenshotImg.alt = `Screenshot del juego - Nivel ${attemptNum}`;
+            }
+            if (contentIndicator) {
+                contentIndicator.style.display = 'none';
+            }
+        }
+    }
+
+    updateNavigationControls() {
+        const indicator = document.getElementById('screenshot-indicator');
+        const prevBtn = document.getElementById('prev-screenshot');
+        const nextBtn = document.getElementById('next-screenshot');
+
+        if (!indicator) return;
+
+        const maxAvailable = this.gameEnded ? this.maxAttempts : this.currentAttempt;
+        const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
+
+        if (this.currentViewingAttempt === this.maxAttempts && hasGif) {
+            indicator.textContent = `GIF (${this.currentViewingAttempt}/${maxAvailable})`;
+        } else {
+            indicator.textContent = `${this.currentViewingAttempt}/${maxAvailable}`;
+        }
+
+        if (prevBtn) prevBtn.disabled = this.currentViewingAttempt <= 1;
+        if (nextBtn) nextBtn.disabled = this.currentViewingAttempt >= maxAvailable;
+    }
+
+    updateGameInfoForViewing() {
+        const infoContent = document.getElementById('info-content');
+        const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
+        const isLastAttempt = this.currentViewingAttempt === this.maxAttempts;
+
+        let infoText = '';
+
+        // Solo mostrar "GIF del juego" si es el último intento con GIF
+        if (isLastAttempt && hasGif) {
+            infoText = 'GIF del juego';
+        }
+
+        // Información adicional según el intento - SIN MOSTRAR "Imagen X"
+        let additionalInfo = [];
+
+        if (this.currentViewingAttempt === 1) {
+            // Para la imagen 1, no mostrar información extra
+            infoText = '';
+        } else {
+            switch(this.currentViewingAttempt) {
+                case 2:
+                    if (gameData.genres) {
+                        additionalInfo.push(`Géneros: ${gameData.genres}`);
+                    }
+                    break;
+                case 3:
+                    if (gameData.platforms) {
+                        additionalInfo.push(`Plataformas: ${gameData.platforms}`);
+                    }
+                    break;
+                case 4:
+                    if (gameData.metacritic) {
+                        additionalInfo.push(`Rating: ${gameData.metacritic}/100`);
+                    }
+                    break;
+                case 5:
+                    if (gameData.release_year) {
+                        additionalInfo.push(`Año: ${gameData.release_year}`);
+                    }
+                    break;
+                case 6:
+                    if (gameData.developer) {
+                        additionalInfo.push(`Desarrollador: ${gameData.developer}`);
+                    }
+                    if (gameData.franchise_name) {
+                        additionalInfo.push(`Franquicia: ${gameData.franchise_name}`);
+                    }
+                    break;
+            }
+        }
+
+        // Combinar información
+        if (additionalInfo.length > 0) {
+            if (infoText) {
+                infoText += ' • ' + additionalInfo.join(' • ');
+            } else {
+                infoText = additionalInfo.join(' • ');
+            }
+        }
+
+        if (infoContent) {
+            infoContent.innerHTML = infoText;
         }
     }
 
     handleSearchInput(e) {
         const query = e.target.value.trim();
-        console.log('🔍 Buscando:', query);
+        console.log('🔍 Texto de búsqueda:', query);
 
         if (this.searchTimeout) {
             clearTimeout(this.searchTimeout);
@@ -100,14 +320,16 @@ class GuessItYetGame {
         this.updateSubmitButton();
 
         if (query.length < 2) {
+            console.log('📝 Query muy corto, ocultando sugerencias');
             this.hideSuggestions();
             return;
         }
 
-        // Mostrar loading
+        console.log('📝 Mostrando loading y preparando búsqueda...');
         this.showLoading();
 
         this.searchTimeout = setTimeout(() => {
+            console.log('⏰ Ejecutando búsqueda después del timeout');
             this.searchGames(query);
         }, 300);
     }
@@ -129,17 +351,21 @@ class GuessItYetGame {
         console.log('🌐 Buscando en IGDB:', query);
 
         try {
-            // Aumentar significativamente el límite de resultados
             const url = `/guessityet/search-games/?q=${encodeURIComponent(query)}&service=igdb&limit=25`;
             console.log('📡 URL de búsqueda:', url);
 
             const response = await fetch(url);
             console.log('📨 Respuesta recibida:', response.status);
 
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
             const data = await response.json();
             console.log('📊 Datos recibidos:', data);
 
             if (data.games && data.games.length > 0) {
+                console.log('💡 Primeros resultados:', data.games.slice(0, 3));
                 this.showSuggestions(data.games);
             } else {
                 console.log('😕 No se encontraron juegos');
@@ -152,25 +378,51 @@ class GuessItYetGame {
     }
 
     showSuggestions(games) {
-        console.log('💡 Mostrando sugerencias:', games.length);
         const suggestionsContainer = document.getElementById('search-suggestions');
-
-        if (!suggestionsContainer) {
-            console.error('❌ No se encontró el contenedor de sugerencias');
-            return;
-        }
+        if (!suggestionsContainer) return;
 
         suggestionsContainer.innerHTML = '';
 
-        // Mostrar todos los juegos encontrados (hasta 25)
         games.forEach(game => {
             const suggestionItem = document.createElement('div');
             suggestionItem.className = 'suggestion-item';
 
-            // Solo mostrar título del juego limpio
+            // Extraer año - adaptado a la estructura de datos de IGDB del backend
+            let releaseYear = '';
+            if (game.first_release_date) {
+                // IGDB envía timestamp Unix
+                if (typeof game.first_release_date === 'number') {
+                    releaseYear = new Date(game.first_release_date * 1000).getFullYear();
+                }
+            } else if (game.released) {
+                // Fallback para otros formatos
+                if (typeof game.released === 'number') {
+                    releaseYear = new Date(game.released * 1000).getFullYear();
+                } else {
+                    const year = new Date(game.released).getFullYear();
+                    if (!isNaN(year)) {
+                        releaseYear = year;
+                    }
+                }
+            }
+
+            // Información adicional con franquicia y año
+            let additionalInfo = [];
+            if (game.franchise) {
+                additionalInfo.push(`<span class="text-primary"><i class="fas fa-crown me-1"></i>${game.franchise}</span>`);
+            }
+            if (releaseYear) {
+                additionalInfo.push(`<span class="text-muted">(${releaseYear})</span>`);
+            }
+
+            const additionalInfoHtml = additionalInfo.length > 0
+                ? `<div class="small mt-1">${additionalInfo.join(' ')}</div>`
+                : '';
+
             suggestionItem.innerHTML = `
                 <div class="flex-grow-1">
                     <div class="fw-bold">${game.name}</div>
+                    ${additionalInfoHtml}
                 </div>
                 <div class="service-indicator">
                     <i class="fas fa-database text-success" title="IGDB"></i>
@@ -178,7 +430,6 @@ class GuessItYetGame {
             `;
 
             suggestionItem.addEventListener('click', () => {
-                console.log('🎮 Juego seleccionado:', game.name);
                 this.selectGame(game);
             });
 
@@ -228,27 +479,23 @@ class GuessItYetGame {
         const searchInput = document.getElementById('game-search');
         if (searchInput) {
             searchInput.value = game.name;
+            console.log('📝 Input actualizado con:', game.name);
         }
 
         this.hideSuggestions();
         this.updateSubmitButton();
+        console.log('🔘 Juego listo para enviar');
     }
 
     updateSubmitButton() {
         const submitBtn = document.getElementById('submit-btn');
         if (submitBtn) {
             submitBtn.disabled = !this.selectedGame;
-            console.log('🔘 Botón enviar actualizado:', !this.selectedGame ? 'deshabilitado' : 'habilitado');
         }
     }
 
     async submitGuess() {
-        if (!this.selectedGame) {
-            console.log('⚠️ No hay juego seleccionado');
-            return;
-        }
-
-        console.log('🚀 Enviando respuesta:', this.selectedGame);
+        if (!this.selectedGame) return;
 
         try {
             const response = await fetch('/guessityet/submit-guess/', {
@@ -264,25 +511,19 @@ class GuessItYetGame {
                 })
             });
 
-            console.log('📨 Respuesta del servidor:', response.status);
             const result = await response.json();
-            console.log('📊 Resultado:', result);
 
             if (result.success) {
                 this.handleGuessResult(result);
             } else {
-                console.error('❌ Error en respuesta:', result);
                 alert('Error al procesar la respuesta');
             }
         } catch (error) {
-            console.error('❌ Error enviando respuesta:', error);
             alert('Error de conexión');
         }
     }
 
     async skipTurn() {
-        console.log('⏭️ Saltando turno...');
-
         try {
             const response = await fetch('/guessityet/skip-turn/', {
                 method: 'POST',
@@ -292,25 +533,19 @@ class GuessItYetGame {
                 }
             });
 
-            console.log('📨 Respuesta skip:', response.status);
             const result = await response.json();
-            console.log('📊 Resultado skip:', result);
 
             if (result.success) {
                 this.handleSkipResult(result);
             } else {
-                console.error('❌ Error saltando:', result);
                 alert('Error al saltar turno');
             }
         } catch (error) {
-            console.error('❌ Error saltando turno:', error);
             alert('Error de conexión');
         }
     }
 
     handleGuessResult(result) {
-        console.log('🎯 Procesando resultado de respuesta:', result);
-
         this.addAttemptToHistory({
             attempt: this.currentAttempt,
             type: 'guess',
@@ -336,8 +571,6 @@ class GuessItYetGame {
     }
 
     handleSkipResult(result) {
-        console.log('⏭️ Procesando resultado de skip:', result);
-
         this.addAttemptToHistory({
             attempt: this.currentAttempt,
             type: 'skipped',
@@ -347,7 +580,6 @@ class GuessItYetGame {
         });
 
         this.updateAttemptIndicator(this.currentAttempt, {skipped: true});
-
         this.currentAttempt = result.current_attempt;
 
         if (result.game_ended) {
@@ -358,14 +590,11 @@ class GuessItYetGame {
     }
 
     updateAttemptIndicators() {
-        console.log('🔄 Actualizando indicadores de intentos');
-
         for (let i = 1; i <= 6; i++) {
             const circle = document.getElementById(`attempt-${i}`);
             if (circle) {
                 circle.classList.remove('current', 'correct', 'wrong', 'franchise', 'skipped');
 
-                // Mostrar solo los círculos necesarios según el tipo de juego
                 if (i > this.maxAttempts) {
                     circle.style.display = 'none';
                 } else {
@@ -378,7 +607,6 @@ class GuessItYetGame {
             }
         }
 
-        // Aplicar estados de intentos anteriores
         if (gameState.attempts) {
             gameState.attempts.forEach(attempt => {
                 this.updateAttemptIndicator(attempt.attempt, attempt);
@@ -404,110 +632,22 @@ class GuessItYetGame {
     }
 
     updateScreenshot() {
-        console.log('📸 Actualizando screenshot para intento:', this.currentAttempt);
-        const screenshotImg = document.getElementById('current-screenshot');
-        const contentIndicator = document.getElementById('content-type-indicator');
-
-        // Verificar disponibilidad de GIF
-        const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
-        const isLastAttempt = this.currentAttempt === this.maxAttempts;
-
-        console.log(`🎬 GIF disponible: ${hasGif}, último intento: ${isLastAttempt}, intento actual: ${this.currentAttempt}`);
-
-        if (isLastAttempt && hasGif) {
-            // Mostrar GIF en el último intento si está disponible
-            console.log('🎬 Mostrando GIF en último intento');
-            if (screenshotImg) {
-                screenshotImg.src = `/media/${gameData.gif_path}`;
-                screenshotImg.alt = 'GIF del juego';
-            }
-            // Mostrar indicador de GIF
-            if (contentIndicator) {
-                contentIndicator.style.display = 'block';
-            }
-        } else {
-            // Mostrar captura normal según el intento actual
-            const screenshot = screenshots.find(s => s.difficulty === this.currentAttempt);
-            if (screenshot && screenshotImg) {
-                console.log('🖼️ Cambiando a captura:', screenshot.url, 'Dificultad:', screenshot.difficulty);
-                screenshotImg.src = screenshot.url;
-                screenshotImg.alt = `Screenshot del juego - Nivel ${this.currentAttempt}`;
-            } else {
-                console.error('❌ No se encontró captura para dificultad:', this.currentAttempt);
-                // Fallback: usar la última captura disponible
-                const fallbackScreenshot = screenshots[screenshots.length - 1];
-                if (fallbackScreenshot && screenshotImg) {
-                    console.log('🔄 Usando captura de fallback:', fallbackScreenshot.url);
-                    screenshotImg.src = fallbackScreenshot.url;
-                    screenshotImg.alt = 'Screenshot del juego';
-                }
-            }
-            // Ocultar indicador de GIF
-            if (contentIndicator) {
-                contentIndicator.style.display = 'none';
-            }
-        }
+        this.currentViewingAttempt = this.currentAttempt;
+        this.showScreenshotForAttempt(this.currentAttempt);
+        this.updateNavigationControls();
+        this.updateAttemptIndicators(); // Asegurar que se actualicen los indicadores
     }
 
     updateGameInfo() {
-        console.log('ℹ️ Actualizando información del juego para intento:', this.currentAttempt);
-        const infoContent = document.getElementById('info-content');
-        const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
-        const isLastAttempt = this.currentAttempt === this.maxAttempts;
-
-        let infoText = '';
-
-        if (isLastAttempt && hasGif) {
-            infoText = `<i class="fas fa-film me-1"></i>GIF del juego`;
-        } else {
-            infoText = `<i class="fas fa-eye me-1"></i>Imagen ${this.currentAttempt}`;
-        }
-
-        // Mostrar información adicional según el intento
-        switch(this.currentAttempt) {
-            case 2:
-                if (gameData.metacritic) {
-                    infoText += `<br><i class="fas fa-star me-1"></i>Rating: ${gameData.metacritic}/100`;
-                }
-                break;
-            case 3:
-                if (gameData.platforms) {
-                    infoText += `<br><i class="fas fa-desktop me-1"></i>${gameData.platforms}`;
-                }
-                break;
-            case 4:
-                if (gameData.genres) {
-                    infoText += `<br><i class="fas fa-tags me-1"></i>${gameData.genres}`;
-                }
-                break;
-            case 5:
-                if (gameData.release_year) {
-                    infoText += `<br><i class="fas fa-calendar me-1"></i>Año: ${gameData.release_year}`;
-                }
-                break;
-            case 6:
-                if (gameData.developer) {
-                    infoText += `<br><i class="fas fa-code me-1"></i>${gameData.developer}`;
-                }
-                // Mostrar franquicia en el último intento si está disponible
-                if (gameData.franchise_name) {
-                    infoText += `<br><i class="fas fa-crown me-1"></i>Franquicia: ${gameData.franchise_name}`;
-                }
-                break;
-        }
-
-        if (infoContent) {
-            infoContent.innerHTML = infoText;
-        }
+        this.updateGameInfoForViewing();
     }
 
     addAttemptToHistory(attempt) {
-        console.log('📝 Añadiendo intento al historial:', attempt);
         const historyContainer = document.getElementById('attempts-history');
+        if (!historyContainer) return;
 
-        if (!historyContainer) {
-            console.error('❌ No se encontró el contenedor de historial');
-            return;
+        if (!this.gameEnded) {
+            historyContainer.style.display = 'block';
         }
 
         const attemptDiv = document.createElement('div');
@@ -522,7 +662,7 @@ class GuessItYetGame {
             className += 'franchise';
             icon = '<i class="fas fa-exclamation-triangle text-warning"></i>';
             const franchiseName = attempt.franchise_name || 'Franquicia correcta';
-            extraText = `<br><small class="text-muted">✨ ${franchiseName}</small>`;
+            extraText = `<br><small class="text-muted">${franchiseName}</small>`;
         } else if (attempt.type === 'skipped') {
             className += 'skipped';
             icon = '<i class="fas fa-forward text-muted"></i>';
@@ -544,8 +684,119 @@ class GuessItYetGame {
         historyContainer.appendChild(attemptDiv);
     }
 
+    setupHistoryToggle() {
+        const gameArea = document.getElementById('game-area');
+        if (!gameArea) return;
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.id = 'history-toggle-btn';
+        toggleBtn.className = 'btn btn-outline-primary mt-3';
+        toggleBtn.innerHTML = '<i class="fas fa-list me-2"></i>Mostrar intentos de la partida';
+        toggleBtn.style.display = 'none';
+
+        toggleBtn.addEventListener('click', () => {
+            this.toggleHistory();
+        });
+
+        const countdown = document.querySelector('.countdown-timer');
+        if (countdown) {
+            gameArea.insertBefore(toggleBtn, countdown);
+        } else {
+            gameArea.appendChild(toggleBtn);
+        }
+    }
+
+    toggleHistory() {
+        const historyContainer = document.getElementById('attempts-history');
+        const toggleBtn = document.getElementById('history-toggle-btn');
+
+        if (!historyContainer || !toggleBtn) return;
+
+        if (historyContainer.style.display === 'none') {
+            historyContainer.style.display = 'block';
+            toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Ocultar intentos de la partida';
+        } else {
+            historyContainer.style.display = 'none';
+            toggleBtn.innerHTML = '<i class="fas fa-list me-2"></i>Mostrar intentos de la partida';
+        }
+    }
+
+    minimizeHistoryForEndedGame() {
+        const historyContainer = document.getElementById('attempts-history');
+        const toggleBtn = document.getElementById('history-toggle-btn');
+
+        if (historyContainer) {
+            historyContainer.style.display = 'none';
+        }
+
+        if (toggleBtn) {
+            toggleBtn.style.display = 'inline-block';
+        }
+    }
+
+    ensureHistoryVisible() {
+        const historyContainer = document.getElementById('attempts-history');
+        const toggleBtn = document.getElementById('history-toggle-btn');
+
+        if (historyContainer) {
+            historyContainer.style.display = 'block';
+        }
+
+        if (toggleBtn) {
+            toggleBtn.style.display = 'none';
+        }
+    }
+
+    loadExistingAttempts() {
+        const historyContainer = document.getElementById('attempts-history');
+        if (!historyContainer) return;
+
+        historyContainer.innerHTML = '';
+
+        if (!gameState.attempts || gameState.attempts.length === 0) {
+            if (!this.gameEnded) {
+                historyContainer.style.display = 'block';
+            }
+            return;
+        }
+
+        gameState.attempts.forEach(attempt => {
+            const attemptDiv = document.createElement('div');
+            let className = 'attempt-result ';
+            let icon = '';
+            let extraText = '';
+
+            if (attempt.correct) {
+                className += 'correct';
+                icon = '<i class="fas fa-check text-success"></i>';
+            } else if (attempt.franchise_match) {
+                className += 'franchise';
+                icon = '<i class="fas fa-exclamation-triangle text-warning"></i>';
+                const franchiseName = attempt.franchise_name || 'Franquicia correcta';
+                extraText = `<br><small class="text-muted">${franchiseName}</small>`;
+            } else if (attempt.type === 'skipped') {
+                className += 'skipped';
+                icon = '<i class="fas fa-forward text-muted"></i>';
+            } else {
+                className += 'wrong';
+                icon = '<i class="fas fa-times text-danger"></i>';
+            }
+
+            attemptDiv.className = className;
+            attemptDiv.innerHTML = `
+                <div class="result-icon">${icon}</div>
+                <div class="flex-grow-1">
+                    <strong>Intento ${attempt.attempt}:</strong> ${attempt.game_name}
+                    <span class="badge bg-success ms-2" title="IGDB"><i class="fas fa-database"></i></span>
+                    ${extraText}
+                </div>
+            `;
+
+            historyContainer.appendChild(attemptDiv);
+        });
+    }
+
     nextAttempt() {
-        console.log('➡️ Avanzando al siguiente intento:', this.currentAttempt);
         this.updateScreenshot();
         this.updateGameInfo();
         this.updateRemainingAttempts();
@@ -565,7 +816,6 @@ class GuessItYetGame {
     }
 
     clearSearchInput() {
-        console.log('🧹 Limpiando input de búsqueda');
         const searchInput = document.getElementById('game-search');
         if (searchInput) {
             searchInput.value = '';
@@ -576,14 +826,13 @@ class GuessItYetGame {
     }
 
     handleWin(result) {
-        console.log('🏆 ¡VICTORIA!', result);
+        this.gameEnded = true;
 
         const attemptsContainer = document.querySelector('.attempts-indicator');
         if (attemptsContainer) {
             attemptsContainer.classList.add('game-won');
         }
 
-        // Colorear círculos restantes de verde
         for (let i = 1; i <= this.maxAttempts; i++) {
             const circle = document.getElementById(`attempt-${i}`);
             if (circle && !circle.classList.contains('correct') && !circle.classList.contains('franchise')) {
@@ -592,23 +841,25 @@ class GuessItYetGame {
             }
         }
 
+        this.updateNavigationControls();
+
         if (result.guessed_it) {
             this.showGuessedItMessage();
         }
         this.showWinMessage(result.game_name);
         this.disableGameControls();
+        this.minimizeHistoryForEndedGame();
         this.showEndGameButtons();
     }
 
     handleLose() {
-        console.log('💀 Derrota...');
+        this.gameEnded = true;
 
         const attemptsContainer = document.querySelector('.attempts-indicator');
         if (attemptsContainer) {
             attemptsContainer.classList.add('game-lost');
         }
 
-        // Colorear círculos restantes de rojo
         for (let i = 1; i <= this.maxAttempts; i++) {
             const circle = document.getElementById(`attempt-${i}`);
             if (circle && !circle.classList.contains('correct') && !circle.classList.contains('franchise')) {
@@ -617,8 +868,11 @@ class GuessItYetGame {
             }
         }
 
+        this.updateNavigationControls();
+
         this.showLoseMessage();
         this.disableGameControls();
+        this.minimizeHistoryForEndedGame();
         this.showEndGameButtons();
     }
 
@@ -638,7 +892,7 @@ class GuessItYetGame {
         winDiv.innerHTML = `
             <h4><i class="fas fa-trophy me-2"></i>¡Ganaste!</h4>
             <p class="mb-0">La respuesta correcta era: <strong>${gameName}</strong></p>
-            ${gameData.franchise_name ? `<p class="mb-0"><i class="fas fa-crown me-1"></i>Franquicia: <strong>${gameData.franchise_name}</strong></p>` : ''}
+            ${gameData.franchise_name ? `<p class="mb-0">Franquicia: <strong>${gameData.franchise_name}</strong></p>` : ''}
         `;
 
         gameArea.appendChild(winDiv);
@@ -651,7 +905,7 @@ class GuessItYetGame {
         loseDiv.innerHTML = `
             <h4><i class="fas fa-skull me-2"></i>¡Perdiste!</h4>
             <p class="mb-0">La respuesta correcta era: <strong>${gameData.title}</strong></p>
-            ${gameData.franchise_name ? `<p class="mb-0"><i class="fas fa-crown me-1"></i>Franquicia: <strong>${gameData.franchise_name}</strong></p>` : ''}
+            ${gameData.franchise_name ? `<p class="mb-0">Franquicia: <strong>${gameData.franchise_name}</strong></p>` : ''}
             <p class="mb-0">¡Más suerte la próxima vez!</p>
         `;
 
@@ -659,7 +913,6 @@ class GuessItYetGame {
     }
 
     disableGameControls() {
-        console.log('🚫 Deshabilitando controles del juego');
         const searchInput = document.getElementById('game-search');
         const submitBtn = document.getElementById('submit-btn');
         const skipBtn = document.getElementById('skip-btn');
@@ -679,27 +932,24 @@ class GuessItYetGame {
             endDiv.className = 'game-ended text-center mt-4';
             endDiv.innerHTML = `
                 <div class="d-flex justify-content-center gap-3">
-                    <button class="btn btn-outline-primary" onclick="toggleAttemptsHistory()">
-                        <i class="fas fa-list me-2"></i>Mostrar Intentos
-                    </button>
                     <button class="btn btn-outline-secondary" onclick="showOtherDays()">
-                        <i class="fas fa-calendar me-2"></i>Jugar Otros Días
+                        <i class="fas fa-calendar me-2"></i>Ir a días anteriores
                     </button>
                 </div>
             `;
 
-            gameArea.appendChild(endDiv);
+            const toggleBtn = document.getElementById('history-toggle-btn');
+            if (toggleBtn) {
+                gameArea.insertBefore(endDiv, toggleBtn);
+            } else {
+                gameArea.appendChild(endDiv);
+            }
         }
     }
 
     startCountdown() {
-        console.log('⏰ Iniciando countdown');
         const countdownDisplay = document.getElementById('countdown-display');
-
-        if (!countdownDisplay) {
-            console.error('❌ No se encontró el display del countdown');
-            return;
-        }
+        if (!countdownDisplay) return;
 
         const updateCountdown = () => {
             const now = new Date();
@@ -744,41 +994,26 @@ class GuessItYetGame {
             }
         }
 
-        console.error('❌ No se pudo obtener el token CSRF');
         return '';
     }
 }
 
 // Funciones globales
 function toggleAttemptsHistory() {
-    const historyContainer = document.getElementById('attempts-history');
-    if (historyContainer.style.display === 'none') {
-        historyContainer.style.display = 'block';
-    } else {
-        historyContainer.style.display = 'none';
+    const game = window.guessItYetGame;
+    if (game) {
+        game.toggleHistory();
     }
 }
 
 function showOtherDays() {
-    alert('Función "Jugar Otros Días" estará disponible próximamente');
+    alert('Función "Ir a días anteriores" estará disponible próximamente');
 }
 
 // Inicializar el juego
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 DOM cargado, inicializando juego IGDB...');
-
-    if (typeof gameState === 'undefined') {
-        console.error('❌ gameState no está definido');
-        return;
-    }
-
-    if (typeof gameData === 'undefined') {
-        console.error('❌ gameData no está definido');
-        return;
-    }
-
-    if (typeof screenshots === 'undefined') {
-        console.error('❌ screenshots no está definido');
+    if (typeof gameState === 'undefined' || typeof gameData === 'undefined' || typeof screenshots === 'undefined') {
+        console.error('Variables del juego no están definidas');
         return;
     }
 
@@ -786,7 +1021,4 @@ document.addEventListener('DOMContentLoaded', function() {
     window.guessItYetGame = game;
 
     console.log('✅ Juego IGDB inicializado correctamente');
-    console.log('👑 Franquicia:', gameData.franchise_name || 'No detectada');
-    console.log('📸 Capturas disponibles:', screenshots.length);
-    console.log('🎬 GIF disponible:', gameData.gif_path ? 'Sí' : 'No');
 });

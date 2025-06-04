@@ -85,28 +85,36 @@ class IGDBService:
             return None
 
     def search_games(self, query_text, limit=25):
-        """Buscar juegos por nombre - aumentado para más resultados"""
+        """Buscar juegos por nombre - corregido para mostrar franquicias y mejorar búsqueda"""
 
-        # Búsqueda principal
+        print(f"Buscando juegos para: '{query_text}'")
+
+        # Búsqueda principal SIN sort (IGDB ordena por relevancia automáticamente)
         query = f"""
         search "{query_text}";
-        fields name, cover.url, first_release_date, genres.name, platforms.name;
+        fields name, cover.url, first_release_date, genres.name, platforms.name, 
+               franchises.name, aggregated_rating, total_rating;
         limit {limit};
         """
 
         results = self.make_request("games", query)
+        print(f"Resultados principales: {len(results) if results else 0}")
 
         if not results:
-            return []
+            results = []
 
-        if len(results) < 10 and len(query_text) > 3:
+        # Búsqueda adicional si hay pocos resultados - usar comodín
+        if len(results) < 10 and len(query_text) > 2:
             alt_query = f"""
             search "{query_text}*";
-            fields name, cover.url, first_release_date, genres.name, platforms.name;
+            fields name, cover.url, first_release_date, genres.name, platforms.name, 
+                   franchises.name, aggregated_rating, total_rating;
             limit {limit - len(results)};
             """
 
             alt_results = self.make_request("games", alt_query)
+            print(f"Resultados alternativos: {len(alt_results) if alt_results else 0}")
+
             if alt_results:
                 # Combinar resultados evitando duplicados
                 seen_ids = {game["id"] for game in results}
@@ -115,7 +123,94 @@ class IGDBService:
                         results.append(game)
                         seen_ids.add(game["id"])
 
-        return results[:limit]
+        # Búsqueda por palabras sueltas si aún hay pocos resultados
+        if len(results) < 8 and len(query_text) > 4:
+            words = query_text.split()
+            if len(words) > 1:
+                # Buscar por la primera palabra más importante
+                main_word = max(words, key=len)  # La palabra más larga
+                word_query = f"""
+                search "{main_word}";
+                fields name, cover.url, first_release_date, genres.name, platforms.name, 
+                       franchises.name, aggregated_rating, total_rating;
+                limit {limit - len(results)};
+                """
+
+                word_results = self.make_request("games", word_query)
+                print(
+                    f"Resultados por palabra '{main_word}': {len(word_results) if word_results else 0}"
+                )
+
+                if word_results:
+                    seen_ids = {game["id"] for game in results}
+                    for game in word_results:
+                        if (
+                            game["id"] not in seen_ids
+                            and query_text.lower() in game["name"].lower()
+                        ):
+                            results.append(game)
+                            seen_ids.add(game["id"])
+
+        # Procesar resultados para incluir información completa
+        processed_results = []
+        for game in results:
+            processed_game = {
+                "id": game["id"],
+                "name": game["name"],
+                "first_release_date": game.get("first_release_date"),
+                "aggregated_rating": game.get("aggregated_rating", 0),
+                "total_rating": game.get("total_rating", 0),
+            }
+
+            # Añadir franquicia si existe
+            franchises = game.get("franchises", [])
+            if franchises and len(franchises) > 0:
+                processed_game["franchise"] = franchises[0].get("name", "")
+
+            processed_results.append(processed_game)
+
+        # Ordenar por relevancia en el backend (ya que IGDB no permite sort con search)
+        def sort_key(game):
+            name_lower = game["name"].lower()
+            query_lower = query_text.lower()
+
+            # Coincidencia exacta = máxima prioridad
+            if name_lower == query_lower:
+                return (
+                    0,
+                    -(game.get("aggregated_rating", 0) or game.get("total_rating", 0)),
+                )
+            # Empieza con el término = segunda prioridad
+            elif name_lower.startswith(query_lower):
+                return (
+                    1,
+                    -(game.get("aggregated_rating", 0) or game.get("total_rating", 0)),
+                )
+            # Contiene el término = tercera prioridad
+            elif query_lower in name_lower:
+                return (
+                    2,
+                    -(game.get("aggregated_rating", 0) or game.get("total_rating", 0)),
+                )
+            # Resto por rating
+            else:
+                return (
+                    3,
+                    -(game.get("aggregated_rating", 0) or game.get("total_rating", 0)),
+                )
+
+        processed_results.sort(key=sort_key)
+
+        final_results = processed_results[:limit]
+        print(f"Resultados finales procesados: {len(final_results)}")
+
+        # Debug: mostrar los primeros 3 resultados
+        for i, game in enumerate(final_results[:3]):
+            print(
+                f"  {i + 1}. {game['name']} (Rating: {game.get('aggregated_rating', 'N/A')}, Franquicia: {game.get('franchise', 'N/A')})"
+            )
+
+        return final_results
 
     def get_game_details(self, igdb_id):
         """Obtener detalles completos del juego"""
@@ -772,21 +867,11 @@ class IGDBService:
             print(f"No hay capturas disponibles para {game_details['name']}")
             return None
 
-        # CAMBIO: 5 capturas con vídeo, 6 sin vídeo (captura extra como pista)
         if len(screenshots) < 8:
             print(
                 f"Insuficientes capturas ({len(screenshots)}) para análisis de calidad"
             )
             return None
-
-        max_screenshots = 5 if has_video else 6
-
-        print(
-            f"Analizando {len(screenshots)} capturas para seleccionar las {max_screenshots} mejores"
-        )
-        print(
-            f"Configuración: {'5 capturas + vídeo' if has_video else '6 capturas sin vídeo (pista extra)'}"
-        )
 
         # Crear o actualizar el juego
         game, created = Game.objects.update_or_create(
@@ -811,6 +896,7 @@ class IGDBService:
         )
 
         # Procesar vídeo y crear GIF si está disponible
+        gif_created = False
         if video_url:
             print("Procesando vídeo para crear GIF...")
             if self.check_video_size(video_url):
@@ -818,18 +904,29 @@ class IGDBService:
                 if gif_path:
                     game.gif_path = gif_path
                     game.save(update_fields=["gif_path"])
+                    gif_created = True
                     print(f"GIF creado exitosamente para: {game.title}")
                 else:
                     print(f"No se pudo crear GIF para: {game.title}")
             else:
                 print(f"Vídeo demasiado grande para {game.title}, saltando GIF")
+
+        # Determinar número de capturas según disponibilidad de GIF
+        if gif_created:
+            max_screenshots = 5
+            print(f"Configuración: 5 capturas + GIF")
         else:
-            print(f"{game.title} solo tendrá capturas de pantalla (sin vídeo/GIF)")
+            max_screenshots = 6
+            print(f"Configuración: 6 capturas (sin vídeo/GIF exitoso)")
+
+        print(
+            f"Analizando {len(screenshots)} capturas para seleccionar las {max_screenshots} mejores"
+        )
 
         # Limpiar capturas anteriores
         Screenshot.objects.filter(game=game).delete()
 
-        # Guardar TODAS las capturas para análisis con IA (15 capturas)
+        # Guardar TODAS las capturas para análisis con IA
         temp_screenshots = []
         for i, screenshot in enumerate(screenshots, 1):
             screenshot_obj = Screenshot.objects.create(
@@ -839,9 +936,7 @@ class IGDBService:
             )
             temp_screenshots.append(screenshot_obj)
 
-        print(
-            f"Guardadas {len(temp_screenshots)} capturas (de 15 obtenidas) para análisis con IA"
-        )
+        print(f"Guardadas {len(temp_screenshots)} capturas para análisis con IA")
 
         # Procesar con IA - OBLIGATORIO para la selección
         try:
@@ -860,11 +955,12 @@ class IGDBService:
                 print(
                     f"Las {max_screenshots} mejores capturas seleccionadas y organizadas para: {game.title}"
                 )
-                if not has_video:
-                    print("  → Captura #6 disponible como pista extra (sin vídeo)")
+                if max_screenshots == 6:
+                    print("  → 6 capturas disponibles (sin vídeo/GIF exitoso)")
+                else:
+                    print("  → 5 capturas + GIF disponible")
             else:
                 print(f"Error en análisis IA para: {game.title}")
-                # Sin IA, no podemos hacer una buena selección de 10->5/6, mejor fallar
                 return None
 
         except ImportError:

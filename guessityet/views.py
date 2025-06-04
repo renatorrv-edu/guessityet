@@ -50,32 +50,39 @@ def daily_game(request):
 def search_games_ajax(request):
     """
     Búsqueda de juegos para el autocompletado
-    Ahora con más resultados y optimizado para IGDB
+    Ahora con franquicia y año de lanzamiento
     """
     if request.method != "GET":
         return JsonResponse({"error": "Método no permitido"}, status=405)
 
     query = request.GET.get("q", "").strip()
-    service_type = request.GET.get("service", "igdb")  # Solo IGDB por defecto
-    limit = int(request.GET.get("limit", 25))  # Aumentado de 8 a 25
+    service_type = request.GET.get("service", "igdb")
+    limit = int(request.GET.get("limit", 25))
 
     if len(query) < 2:
         return JsonResponse({"games": []})
 
     try:
-        # Solo usar IGDB, eliminar lógica de RAWG
         igdb_service = IGDBService()
         games = igdb_service.search_games(query, limit=limit)
 
         formatted_games = []
         for game in games or []:
-            formatted_games.append(
-                {
-                    "id": game["id"],
-                    "name": game["name"],
-                    "service": "igdb",
-                }
-            )
+            game_data = {
+                "id": game["id"],
+                "name": game["name"],
+                "service": "igdb",
+            }
+
+            # Añadir fecha de lanzamiento si existe
+            if game.get("first_release_date"):
+                game_data["released"] = game["first_release_date"]
+
+            # Añadir franquicia si existe
+            if game.get("franchise"):
+                game_data["franchise"] = game["franchise"]
+
+            formatted_games.append(game_data)
 
         return JsonResponse({"games": formatted_games})
 
@@ -133,7 +140,7 @@ def submit_guess(request):
         data = json.loads(request.body)
         guessed_game_name = data.get("game_name", "").strip()
         guessed_game_id = data.get("game_id")
-        service_type = data.get("service", "rawg")  # "rawg" o "igdb"
+        service_type = data.get("service", "rawg")
 
         if not guessed_game_name:
             return JsonResponse({"error": "Nombre del juego requerido"}, status=400)
@@ -164,8 +171,13 @@ def skip_turn(request):
         return JsonResponse({"error": "No hay juego activo"}, status=400)
 
     game_state = request.session["game_state"]
+    game = get_object_or_404(Game, id=game_state["game_id"])
 
-    if game_state["won"] or game_state["current_attempt"] > 6:
+    # Calcular máximo de intentos según disponibilidad de GIF
+    has_gif = game.gif_path and game.gif_path.strip()
+    max_attempts = 6 if has_gif else min(6, game.screenshot_set.count())
+
+    if game_state["won"] or game_state["current_attempt"] > max_attempts:
         return JsonResponse({"error": "Juego ya terminado"}, status=400)
 
     game_state["attempts"].append(
@@ -180,7 +192,8 @@ def skip_turn(request):
 
     game_state["current_attempt"] += 1
 
-    if game_state["current_attempt"] > 6:
+    # Verificar si el juego ha terminado
+    if game_state["current_attempt"] > max_attempts:
         game_state["lost"] = True
 
     request.session["game_state"] = game_state
@@ -380,18 +393,16 @@ def process_guess(game, guessed_game_name, guessed_game_id, service_type, game_s
     # Verificar si es el juego correcto
     if guessed_game_id == correct_game_id and service_type == game_service:
         is_correct = True
-        print(f"✅ Respuesta correcta: {guessed_game_name}")
+        print(f"Respuesta correcta: {guessed_game_name}")
     else:
-        print(f"❌ Respuesta incorrecta: {guessed_game_name} != {game.title}")
+        print(f"Respuesta incorrecta: {guessed_game_name} != {game.title}")
         print(
             f"   IDs: {guessed_game_id} != {correct_game_id} o servicios: {service_type} != {game_service}"
         )
 
         # Verificar franquicia si el juego correcto tiene franquicia
         if game.franchise_name and game.franchise_slug:
-            print(
-                f"🔍 Verificando franquicia del juego correcto: {game.franchise_name}"
-            )
+            print(f"Verificando franquicia del juego correcto: {game.franchise_name}")
 
             # Obtener franquicia del juego adivinado según el servicio
             if service_type == "igdb":
@@ -413,7 +424,7 @@ def process_guess(game, guessed_game_name, guessed_game_id, service_type, game_s
                 )
 
             if guessed_franchise_name and guessed_franchise_slug:
-                print(f"🔍 Franquicia del juego adivinado: {guessed_franchise_name}")
+                print(f"Franquicia del juego adivinado: {guessed_franchise_name}")
 
                 if (
                     game.franchise_slug == guessed_franchise_slug
@@ -421,15 +432,15 @@ def process_guess(game, guessed_game_name, guessed_game_id, service_type, game_s
                 ):
                     franchise_match = True
                     franchise_name = game.franchise_name
-                    print(f"🟡 ¡Franquicia correcta!: {franchise_name}")
+                    print(f"¡Franquicia correcta!: {franchise_name}")
                 else:
                     print(
-                        f"❌ Franquicias diferentes: '{game.franchise_name}' vs '{guessed_franchise_name}'"
+                        f"Franquicias diferentes: '{game.franchise_name}' vs '{guessed_franchise_name}'"
                     )
             else:
-                print("❌ No se pudo obtener franquicia del juego adivinado")
+                print("No se pudo obtener franquicia del juego adivinado")
         else:
-            print("ℹ️ El juego correcto no tiene franquicia definida")
+            print("El juego correcto no tiene franquicia definida")
 
     # Crear registro del intento
     attempt_data = {
@@ -452,7 +463,11 @@ def process_guess(game, guessed_game_name, guessed_game_id, service_type, game_s
     else:
         game_state["current_attempt"] += 1
 
-        if game_state["current_attempt"] > len(game.screenshot_set.all()):
+        # Calcular máximo de intentos según disponibilidad de GIF
+        has_gif = game.gif_path and game.gif_path.strip()
+        max_attempts = 6 if has_gif else min(6, game.screenshot_set.count())
+
+        if game_state["current_attempt"] > max_attempts:
             game_state["lost"] = True
 
     return {
