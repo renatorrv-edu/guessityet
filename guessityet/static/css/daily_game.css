@@ -1,0 +1,380 @@
+/* Estilos principales para el juego diario GuessItYet */
+
+.game-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.game-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    position: relative;
+}
+
+.igdb-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255,255,255,0.2);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+}
+
+.franchise-info {
+    background: rgba(255,255,255,0.1);
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+    display: inline-block;
+}
+
+/* Contenedor de capturas */
+.screenshot-container {
+    position: relative;
+    text-align: center;
+    margin-bottom: 30px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.screenshot-main {
+    width: 100%;
+    max-width: 600px;
+    height: 400px;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto;
+    cursor: zoom-in;
+}
+
+.game-info-overlay {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.video-type-indicator {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255,165,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Zoom overlay para las imágenes */
+.zoom-overlay {
+    position: absolute;
+    border: 3px solid #007bff;
+    border-radius: 50%;
+    pointer-events: none;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(1px);
+    transform: scale(2);
+    z-index: 100;
+    display: none;
+}
+
+/* Indicadores de intentos */
+.attempts-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.attempt-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    border: 2px solid #ddd;
+    background: #f8f9fa;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.attempt-circle:hover {
+    transform: scale(1.05);
+    border-color: #007bff;
+}
+
+.attempt-circle.current {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+    transform: scale(1.1);
+}
+
+.attempt-circle.correct {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.attempt-circle.wrong {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.attempt-circle.franchise {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+.attempt-circle.skipped {
+    background: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.attempt-circle.clickable {
+    cursor: pointer;
+}
+
+.attempt-circle.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.attempt-circle.selected {
+    font-weight: bold;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.3);
+}
+
+/* Estados de fin de juego */
+.game-won .attempt-circle {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.game-lost .attempt-circle {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.game-won .attempt-circle.correct {
+    background: #155724;
+    border-color: #155724;
+}
+
+.game-won .attempt-circle.franchise {
+    background: #856404;
+    border-color: #856404;
+    color: white;
+}
+
+/* Intentos restantes */
+.remaining-attempts {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Búsqueda */
+.search-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-input {
+    font-size: 16px;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    transition: border-color 0.3s;
+}
+
+.search-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.loading-container {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.loading-container .fa-gamepad {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.no-results, .error-results {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.suggestion-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background: #f8f9fa;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item .flex-grow-1 {
+    flex-grow: 1;
+}
+
+.service-indicator {
+    margin-left: auto;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Historial de intentos */
+.attempts-history {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
+.attempts-history h5 {
+    margin-bottom: 15px;
+    color: #495057;
+}
+
+.attempt-result {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.attempt-result.correct {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.attempt-result.wrong {
+    background: #f8d7da;
+    border-color: #dc3545;
+}
+
+.attempt-result.franchise {
+    background: #fff3cd;
+    border-color: #ffc107;
+}
+
+.attempt-result.skipped {
+    background: #e2e3e5;
+    border-color: #6c757d;
+}
+
+.result-icon {
+    font-size: 20px;
+}
+
+/* Timer y elementos finales */
+.countdown-timer {
+    text-align: center;
+    font-size: 18px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.guessed-it {
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    color: white;
+    text-align: center;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    font-size: 24px;
+    font-weight: bold;
+    animation: celebration 2s ease-in-out;
+}
+
+@keyframes celebration {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.game-ended {
+    text-align: center;
+    margin-top: 30px;
+}
+
+/* Botones personalizados */
+.btn-skip {
+    background: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-skip:hover {
+    background: #545b62;
+    border-color: #4e555b;
+}
+
+.franchise-hint {
+    background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+    color: #333;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    font-size: 14px;
+    text-align: center;
+}
