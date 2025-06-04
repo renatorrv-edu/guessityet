@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "guessityet.apps.GuessityetConfig",
     "django_celery_beat",
+    "bootstrap5",
+    "drf_spectacular",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -131,9 +134,13 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# API Keys
-RAWG_API_KEY = os.getenv("RAWG_API_KEY")
+# API Keys - IGDB Configuration
+IGDB_CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
+IGDB_CLIENT_SECRET = os.getenv("IGDB_CLIENT_SECRET")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Mantener RAWG por compatibilidad temporal
+RAWG_API_KEY = os.getenv("RAWG_API_KEY")
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
@@ -147,3 +154,19 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 os.makedirs(MEDIA_ROOT / "game_gifs", exist_ok=True)
 os.makedirs(MEDIA_ROOT / "processed_screenshots", exist_ok=True)
+
+# DRF Spectacular settings
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Guess It Yet?",
+    "DESCRIPTION": "Your project description",  # TODO: Rellenar
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
+# Rest Framework Settings
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
