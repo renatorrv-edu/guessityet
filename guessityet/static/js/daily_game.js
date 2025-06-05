@@ -50,8 +50,8 @@ class GuessItYetGame {
             zoomOverlay.style.height = '70px';
             zoomOverlay.style.display = 'block';
 
-            const bgX = -(x - 35) * 1.5;
-            const bgY = -(y - 35) * 1.5;
+            const bgX = -(x - 35) * 1.5 + 35;
+            const bgY = -(y - 35) * 1.5 + 35;
             zoomOverlay.style.backgroundImage = `url(${screenshotImg.src})`;
             zoomOverlay.style.backgroundPosition = `${bgX}px ${bgY}px`;
             zoomOverlay.style.backgroundSize = `${screenshotImg.width * 2}px ${screenshotImg.height * 2}px`;
@@ -136,7 +136,7 @@ class GuessItYetGame {
 
     async searchGames(query) {
         try {
-            const url = `/guessityet/search-games/?q=${encodeURIComponent(query)}&service=igdb&limit=25`;
+            const url = `/search-games/?q=${encodeURIComponent(query)}&service=igdb&limit=25`;
             const response = await fetch(url);
 
             if (!response.ok) {
@@ -270,7 +270,7 @@ class GuessItYetGame {
         if (!this.selectedGame) return;
 
         try {
-            const response = await fetch('/guessityet/submit-guess/', {
+            const response = await fetch('/submit-guess/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -302,7 +302,7 @@ class GuessItYetGame {
 
     async skipTurn() {
         try {
-            const response = await fetch('/guessityet/skip-turn/', {
+            const response = await fetch('/skip-turn/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -493,12 +493,12 @@ class GuessItYetGame {
             switch(this.currentViewingAttempt) {
                 case 2:
                     if (gameData.genres) {
-                        infoText = `Género/s: ${gameData.genres}`;
+                        infoText = `Géneros: ${gameData.genres}`;
                     }
                     break;
                 case 3:
                     if (gameData.platforms) {
-                        infoText = `Plataforma/s: ${gameData.platforms}`;
+                        infoText = `Plataformas: ${gameData.platforms}`;
                     }
                     break;
                 case 4:
@@ -842,7 +842,7 @@ async function generateNewTestGame() {
     button.disabled = true;
 
     try {
-        const response = await fetch('/guessityet/new-test-game-igdb/', {
+        const response = await fetch('/nuevo-juego-igdb/', {
             method: 'GET'
         });
 

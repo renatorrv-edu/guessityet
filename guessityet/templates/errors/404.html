@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Página no encontrada - GuessItYet{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="error-container">
+                <h1 class="display-1 text-muted">404</h1>
+                <h2 class="mb-3">Página no encontrada</h2>
+                <p class="text-muted mb-4">
+                    Lo sentimos, la página que buscas no existe o ha sido movida.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'daily_game' %}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Volver al Inicio
+                    </a>
+                    <button onclick="history.back()" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Atrás
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

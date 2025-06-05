@@ -1,10 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
 
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}GuessItYet - Adivina el videojuego con capturas e información gradual{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}juego, videojuegos, adivinar, guess, quiz, gaming{% endblock %}">
+    <meta name="author" content="GuessItYet">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}GuessItYet{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Adivina el videojuego con capturas e información gradual{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+
+    <title>{% block title %}GuessItYet{% endblock %}</title>
+
+    <!-- Favicon -->
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/favicon.ico' %}">
+
+    <!-- Bootstrap CSS -->
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <!-- CSRF Token para JavaScript -->
+    {% csrf_token %}
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <!-- Logo/Brand -->
+            <a class="navbar-brand fw-bold" href="{% url 'guessityet:daily_game' %}">
+                <i class="fas fa-gamepad me-2"></i>GuessItYet
+            </a>
+
+            <!-- Mobile toggle button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'daily_game' %}active{% endif %}"
+                           href="{% url 'guessityet:daily_game' %}">
+                            <i class="fas fa-calendar-day me-1"></i>Juego Diario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'game_history' %}active{% endif %}"
+                           href="{% url 'guessityet:game_history' %}">
+                            <i class="fas fa-history me-1"></i>Historial
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'how_to_play' %}active{% endif %}"
+                           href="{% url 'guessityet:how_to_play' %}">
+                            <i class="fas fa-question-circle me-1"></i>Cómo Jugar
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}"
+                           href="{% url 'guessityet:about' %}">
+                            <i class="fas fa-info-circle me-1"></i>Acerca de
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- User menu -->
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>{{ user.username }}
+                                {% if user.profile.current_streak > 0 %}
+                                    <span class="badge bg-warning text-dark ms-1">{{ user.profile.current_streak }}</span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'guessityet:profile' %}">
+                                        <i class="fas fa-user-circle me-2"></i>Mi Perfil
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'password_change' %}">
+                                        <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'guessityet:register' %}">
+                                <i class="fas fa-user-plus me-1"></i>Registrarse
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="{% block main_class %}{% endblock %}">
+        <!-- Messages/Alerts -->
+        {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Page content -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="mb-3">
+                        <i class="fas fa-gamepad me-2"></i>GuessItYet
+                    </h5>
+                    <p class="text-muted mb-0">
+                        Adivina videojuegos con capturas e información gradual.
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="mb-3">Enlaces</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'guessityet:how_to_play' %}" class="text-light text-decoration-none">Cómo Jugar</a></li>
+                        <li><a href="{% url 'guessityet:about' %}" class="text-light text-decoration-none">Acerca de</a></li>
+                        <li><a href="{% url 'guessityet:game_history' %}" class="text-light text-decoration-none">Historial de Juegos</a></li>
+                        {% if not user.is_authenticated %}
+                            <li><a href="{% url 'login' %}" class="text-light text-decoration-none">Iniciar Sesión</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">
+                        &copy; {% now "Y" %} GuessItYet. Todos los derechos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">
+                        Datos de juegos proporcionados por
+                        <a href="https://www.igdb.com/" target="_blank" class="text-light">IGDB</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JavaScript -->
+    {% bootstrap_javascript %}
+
+    <!-- Custom JavaScript -->
+    <script src="{% static 'js/base.js' %}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

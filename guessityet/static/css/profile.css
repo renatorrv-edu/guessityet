@@ -1,0 +1,52 @@
+/* Estilos para la página de perfil */
+.profile-header {
+    background: var(--game-header-bg);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    border-radius: var(--border-radius-lg);
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: var(--shadow-medium);
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-light);
+    text-align: center;
+    transition: transform var(--transition-medium);
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.achievement-badge {
+    background: var(--warning-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-lg);
+    font-weight: 600;
+    margin: 0.25rem;
+    display: inline-block;
+}

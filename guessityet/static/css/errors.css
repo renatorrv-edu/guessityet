@@ -1,0 +1,27 @@
+/* Estilos para páginas de error */
+.error-container {
+    padding: 3rem 0;
+}
+
+.error-container .display-1 {
+    font-weight: 900;
+    font-size: 8rem;
+    line-height: 1;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.error-container h2 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.error-container p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+    .error-container .display-1 {
+        font-size: 4rem;
+    }
+}
