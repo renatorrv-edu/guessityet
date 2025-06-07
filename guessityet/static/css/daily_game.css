@@ -87,10 +87,6 @@
     transition: transform var(--transition-normal);
 }
 
-.screenshot-main:hover {
-    transform: scale(1.02);
-}
-
 /* Info overlay */
 .game-info-overlay {
     position: absolute;
@@ -550,20 +546,6 @@
 .history-toggle-btn:hover {
     background: var(--bg-surface-3);
     color: var(--text-primary);
-}
-
-/* Zoom overlay para imágenes */
-.zoom-overlay {
-    position: absolute;
-    border: 3px solid var(--primary-color);
-    border-radius: 50%;
-    pointer-events: none;
-    background: rgba(168, 199, 250, 0.1);
-    backdrop-filter: blur(2px);
-    transform: scale(2);
-    z-index: 100;
-    display: none;
-    box-shadow: var(--shadow-md);
 }
 
 /* Responsive design */

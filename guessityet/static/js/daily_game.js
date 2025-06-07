@@ -23,44 +23,12 @@ class GuessItYetGame {
         this.updateAttemptIndicators();
         this.updateScreenshot();
         this.updateGameInfo();
-        this.setupImageZoom();
         this.loadExistingAttempts();
         this.startCountdown();
 
         if (this.gameEnded) {
             this.disableGameControls();
         }
-    }
-
-    setupImageZoom() {
-        const screenshotImg = document.getElementById('current-screenshot');
-        const screenshotContainer = document.querySelector('.screenshot-container');
-        const zoomOverlay = document.getElementById('zoom-overlay');
-
-        if (!screenshotImg || !screenshotContainer || !zoomOverlay) return;
-
-        screenshotContainer.addEventListener('mousemove', (e) => {
-            const rect = screenshotContainer.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            zoomOverlay.style.left = (x - 35) + 'px';
-            zoomOverlay.style.top = (y - 35) + 'px';
-            zoomOverlay.style.width = '70px';
-            zoomOverlay.style.height = '70px';
-            zoomOverlay.style.display = 'block';
-
-            const bgX = -(x - 35) * 1.5 + 35;
-            const bgY = -(y - 35) * 1.5 + 35;
-            zoomOverlay.style.backgroundImage = `url(${screenshotImg.src})`;
-            zoomOverlay.style.backgroundPosition = `${bgX}px ${bgY}px`;
-            zoomOverlay.style.backgroundSize = `${screenshotImg.width * 2}px ${screenshotImg.height * 2}px`;
-            zoomOverlay.style.backgroundRepeat = 'no-repeat';
-        });
-
-        screenshotContainer.addEventListener('mouseleave', () => {
-            zoomOverlay.style.display = 'none';
-        });
     }
 
     setupEventListeners() {
