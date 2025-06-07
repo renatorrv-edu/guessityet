@@ -657,7 +657,7 @@ class GuessItYetGame {
             if (result.guessed_it) {
                 remainingDiv.innerHTML = `
                     <div class="alert alert-success text-center mb-0">
-                        <h4><i class="fas fa-star me-2"></i>¡GUESSED IT!</h4>
+                        <h4><i class="fas fa-star me-2"></i>GUESSED IT!</h4>
                         <p class="mb-0">¡Acertaste en el primer intento!</p>
                     </div>
                 `;
