@@ -1,4 +1,4 @@
-# Guess It Yet? (nombre provisional)
+# Guess It Yet?
 
 ### Introducción
 
