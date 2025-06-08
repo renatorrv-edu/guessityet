@@ -880,7 +880,7 @@ class GuessItYetGame {
         const gameArea = document.getElementById('game-area');
         const guessedItDiv = document.createElement('div');
         guessedItDiv.className = 'guessed-it';
-        guessedItDiv.innerHTML = '<i class="fas fa-star me-2"></i>¡GUESSED IT!';
+        guessedItDiv.innerHTML = '<i class="fas fa-star me-2"></i>GUESSED IT!';
 
         gameArea.insertBefore(guessedItDiv, gameArea.firstChild);
     }

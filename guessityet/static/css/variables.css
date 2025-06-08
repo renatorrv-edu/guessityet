@@ -1,0 +1,248 @@
+:root {
+    /* Colores primarios - azul más oscuro y elegante */
+    --primary-color: #3498DB;    /* Azul más oscuro - más elegante */
+    --primary-light: #5DADE2;    /* Azul claro para hover */
+    --primary-dark: #2980B9;     /* Azul oscuro para activos */
+    --secondary-color: #6C5CE7;  /* Púrpura moderno para elementos secundarios */
+    --accent-color: #FF6B6B;     /* Rojo coral para alertas y acentos */
+
+    /* Backgrounds - como PyCharm, más claros que negro puro */
+    --bg-surface: #2B2B2B;       /* Gris oscuro principal (como PyCharm) */
+    --bg-surface-1: #313335;     /* Primer nivel de elevación */
+    --bg-surface-2: #3C3F41;     /* Segundo nivel - cards, modales */
+    --bg-surface-3: #4C5052;     /* Tercer nivel - elementos elevados */
+    --bg-surface-variant: #383B3D; /* Variante para elementos especiales */
+
+    /* Colores de estado - más vibrantes y definidos */
+    --success-color: #00E676;    /* Verde brillante para éxito */
+    --warning-color: #FFB74D;    /* Naranja suave para advertencias */
+    --error-color: #FF5252;      /* Rojo vibrante para errores */
+    --info-color: #448AFF;       /* Azul brillante para información */
+
+    /* Texto - más blanco pero no puro */
+    --text-primary: #F5F5F5;     /* Blanco humo para texto principal */
+    --text-secondary: #C9C9C9;   /* Gris muy claro para texto secundario */
+    --text-tertiary: #9E9E9E;    /* Gris medio para texto menos importante */
+    --text-disabled: #616161;    /* Gris oscuro para elementos deshabilitados */
+    --text-on-primary: #FFFFFF;  /* Blanco puro sobre colores primarios */
+
+    /* Bordes y divisores - más sutiles, estilo PyCharm */
+    --border-color: #555555;     /* Borde principal */
+    --border-subtle: #424242;    /* Borde sutil */
+    --border-strong: #6A6A6A;    /* Borde destacado */
+    --divider-color: #4A4A4A;    /* Divisores */
+
+    /* Sombras - adaptadas para el tema más claro */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.25);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.4);
+    --shadow-xl: 0 20px 40px rgba(0,0,0,0.5);
+
+    /* Radius - mantener Material Design 3 */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+
+    /* Transiciones */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.35s ease;
+
+    /* Z-index */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal: 1040;
+    --z-popover: 1050;
+    --z-tooltip: 1060;
+
+    /* Gradientes - con los nuevos colores vibrantes */
+    --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+    --gradient-surface: linear-gradient(145deg, var(--bg-surface-1) 0%, var(--bg-surface-2) 100%);
+    --gradient-game: linear-gradient(135deg, var(--primary-color) 0%, var(--info-color) 100%);
+
+    /* Colores específicos para el juego - más vibrantes */
+    --game-correct: #00E676;     /* Verde brillante para respuestas correctas */
+    --game-wrong: #FF5252;       /* Rojo vibrante para respuestas incorrectas */
+    --game-franchise: #FFB74D;   /* Naranja para franquicia correcta */
+    --game-skipped: #9E9E9E;     /* Gris para turnos saltados */
+    --game-current: var(--primary-color); /* Azul cielo para turno actual */
+
+    /* Estados hover y focus - actualizados con el azul más oscuro */
+    --hover-overlay: rgba(255, 255, 255, 0.08);
+    --focus-overlay: rgba(52, 152, 219, 0.25);
+    --active-overlay: rgba(255, 255, 255, 0.12);
+
+    /* Colores para código (inspirado en PyCharm) */
+    --code-bg: #1E1E1E;
+    --code-text: #A9B7C6;
+    --code-keyword: #CC7832;
+    --code-string: #6A8759;
+    --code-comment: #808080;
+    --code-number: #6897BB;
+}
+
+/* Tema claro (para futuro uso) */
+/* Tema claro - paleta vibrante equivalente */
+[data-theme="light"] {
+    --primary-color: #2E86AB;    /* Azul océano - equivalente oscuro */
+    --primary-light: #39A9DB;    /* Azul claro */
+    --primary-dark: #1E5F8B;     /* Azul oscuro */
+    --secondary-color: #6C5CE7;  /* Púrpura - mantener igual */
+    --accent-color: #E74C3C;     /* Rojo más intenso para tema claro */
+
+    /* Backgrounds - grises muy claros pero no blancos puros */
+    --bg-surface: #FAFAFA;       /* Gris muy claro en lugar de blanco puro */
+    --bg-surface-1: #F5F5F5;     /* Gris muy claro */
+    --bg-surface-2: #EEEEEE;     /* Gris claro */
+    --bg-surface-3: #E5E5E5;     /* Gris medio claro */
+    --bg-surface-variant: #F0F0F0;
+
+    /* Colores de estado - más contrastados para tema claro */
+    --success-color: #1B5E20;    /* Verde muy oscuro */
+    --warning-color: #E65100;    /* Naranja muy oscuro */
+    --error-color: #B71C1C;      /* Rojo muy oscuro */
+    --info-color: #0D47A1;       /* Azul muy oscuro */
+
+    /* Texto - mayor contraste */
+    --text-primary: #1A1A1A;     /* Negro suave para texto principal */
+    --text-secondary: #424242;   /* Gris oscuro para texto secundario */
+    --text-tertiary: #757575;    /* Gris medio para texto terciario */
+    --text-disabled: #BDBDBD;    /* Gris claro para deshabilitado */
+    --text-on-primary: #FFFFFF;  /* Blanco sobre colores primarios */
+
+    /* Bordes - más contrastados */
+    --border-color: #D5D5D5;     /* Borde principal más oscuro */
+    --border-subtle: #E8E8E8;    /* Borde sutil */
+    --border-strong: #999999;    /* Borde destacado más oscuro */
+    --divider-color: #E0E0E0;    /* Divisores */
+
+    /* Sombras - más visibles en tema claro */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.15);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.12);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
+    --shadow-xl: 0 20px 40px rgba(0,0,0,0.2);
+
+    /* Estados hover y focus para tema claro */
+    --hover-overlay: rgba(0, 0, 0, 0.06);
+    --focus-overlay: rgba(46, 134, 171, 0.15);
+    --active-overlay: rgba(0, 0, 0, 0.1);
+
+    /* Colores específicos para el juego en tema claro */
+    --game-correct: #1B5E20;
+    --game-wrong: #B71C1C;
+    --game-franchise: #E65100;
+    --game-skipped: #424242;
+    --game-current: var(--primary-color);
+
+    /* Status colors para tema claro - más contrastados */
+    --status-success-bg: rgba(27, 94, 32, 0.1);
+    --status-success-border: rgba(27, 94, 32, 0.3);
+    --status-success-text: #1B5E20;
+
+    --status-error-bg: rgba(183, 28, 28, 0.1);
+    --status-error-border: rgba(183, 28, 28, 0.3);
+    --status-error-text: #B71C1C;
+
+    --status-warning-bg: rgba(230, 81, 0, 0.1);
+    --status-warning-border: rgba(230, 81, 0, 0.3);
+    --status-warning-text: #E65100;
+
+    --status-info-bg: rgba(13, 71, 161, 0.1);
+    --status-info-border: rgba(13, 71, 161, 0.3);
+    --status-info-text: #0D47A1;
+
+    /* Variables específicas para diferentes contextos en tema claro */
+    --navbar-bg: var(--bg-surface);
+    --navbar-border: var(--border-color);
+
+    --card-bg: var(--bg-surface);
+    --card-border: var(--border-color);
+    --card-hover-border: var(--primary-color);
+
+    --input-bg: var(--bg-surface);
+    --input-border: var(--border-color);
+    --input-focus-border: var(--primary-color);
+    --input-text: var(--text-primary);
+    --input-placeholder: var(--text-tertiary);
+
+    --btn-primary-bg: var(--primary-color);
+    --btn-primary-hover: var(--primary-dark);
+    --btn-secondary-bg: var(--bg-surface-2);
+    --btn-secondary-hover: var(--bg-surface-3);
+}
+
+/* Variables específicas para diferentes contextos */
+:root {
+    /* Navbar */
+    --navbar-bg: var(--bg-surface-1);
+    --navbar-border: var(--border-subtle);
+
+    /* Cards */
+    --card-bg: var(--bg-surface-1);
+    --card-border: var(--border-color);
+    --card-hover-border: var(--primary-color);
+
+    /* Forms */
+    --input-bg: var(--bg-surface-2);
+    --input-border: var(--border-color);
+    --input-focus-border: var(--primary-color);
+    --input-text: var(--text-primary);
+    --input-placeholder: var(--text-tertiary);
+
+    /* Buttons */
+    --btn-primary-bg: var(--primary-color);
+    --btn-primary-hover: var(--primary-dark);
+    --btn-secondary-bg: var(--bg-surface-2);
+    --btn-secondary-hover: var(--bg-surface-3);
+
+    /* Game specific */
+    --screenshot-border: var(--border-color);
+    --attempt-circle-bg: var(--bg-surface-2);
+    --attempt-circle-border: var(--border-color);
+    --attempt-circle-current: var(--primary-color);
+
+    /* Status colors with better contrast - colores más vibrantes */
+    --status-success-bg: rgba(0, 230, 118, 0.15);
+    --status-success-border: rgba(0, 230, 118, 0.4);
+    --status-success-text: #69F0AE;
+
+    --status-error-bg: rgba(255, 82, 82, 0.15);
+    --status-error-border: rgba(255, 82, 82, 0.4);
+    --status-error-text: #FF8A80;
+
+    --status-warning-bg: rgba(255, 183, 77, 0.15);
+    --status-warning-border: rgba(255, 183, 77, 0.4);
+    --status-warning-text: #FFCC02;
+
+    --status-info-bg: rgba(68, 138, 255, 0.15);
+    --status-info-border: rgba(68, 138, 255, 0.4);
+    --status-info-text: #82B1FF;
+}
+
+/* Custom scrollbar para completar el tema */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--bg-surface);
+}

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Error del servidor - GuessItYet{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="error-container">
+                <h1 class="display-1 text-muted">500</h1>
+                <h2 class="mb-3">Error del servidor</h2>
+                <p class="text-muted mb-4">
+                    Ha ocurrido un error interno. Nuestro equipo ha sido notificado.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'daily_game' %}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Volver al Inicio
+                    </a>
+                    <button onclick="location.reload()" class="btn btn-outline-secondary">
+                        <i class="fas fa-refresh me-2"></i>Reintentar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

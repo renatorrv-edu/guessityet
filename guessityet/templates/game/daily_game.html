@@ -1,569 +1,204 @@
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>GuessItYet - Juego Diario</title>
-    {% load bootstrap5 %}
-    {% bootstrap_css %}
-    {% bootstrap_javascript %}
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .game-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+{% extends 'base.html' %}
+{% load static %}
 
-        .game-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px;
-            position: relative;
-        }
+{% block title %}Juego Diario - Guess It Yet?{% endblock %}
 
-        .igdb-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255,255,255,0.2);
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-        }
+{% block meta_description %}Juega al Guess It Yet? diario. Adivina el videojuego con capturas e información gradual.{% endblock %}
 
-        .franchise-info {
-            background: rgba(255,255,255,0.1);
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            display: inline-block;
-        }
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/daily_game.css' %}">
+{% endblock %}
 
-        .screenshot-container {
-            position: relative;
-            text-align: center;
-            margin-bottom: 30px;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
+{% block content %}
+<div class="game-container">
+    <!-- Header del juego simplificado -->
+    <div class="game-header fade-in">
+        <h1>
+            <i class="fas fa-gamepad me-2"></i>
+            Juego #{{ today|date:"z"|add:1 }}
+        </h1>
+        <div class="game-number">{{ today|date:"l, j \d\e F \d\e Y" }}</div>
 
-        .screenshot-main {
-            width: 100%;
-            max-width: 600px;
-            height: 400px;
-            object-fit: cover;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .game-info-overlay {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .attempts-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .attempt-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            border: 2px solid #ddd;
-            background: #f8f9fa;
-            color: #6c757d;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .attempt-circle:hover {
-            transform: scale(1.05);
-            border-color: #007bff;
-        }
-
-        .attempt-circle.current {
-            border-color: #007bff;
-            background: #007bff;
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .attempt-circle.correct {
-            background: #28a745;
-            border-color: #28a745;
-            color: white;
-        }
-
-        .attempt-circle.wrong {
-            background: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-
-        .attempt-circle.franchise {
-            background: #ffc107;
-            border-color: #ffc107;
-            color: #000;
-        }
-
-        .attempt-circle.skipped {
-            background: #6c757d;
-            border-color: #6c757d;
-            color: white;
-        }
-
-        .attempt-circle.clickable {
-            cursor: pointer;
-        }
-
-        .attempt-circle.disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .attempt-circle.selected {
-            font-weight: bold;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.3);
-        }
-
-        .screenshot-main {
-            cursor: zoom-in;
-        }
-
-        .zoom-overlay {
-            position: absolute;
-            border: 3px solid #007bff;
-            border-radius: 50%;
-            pointer-events: none;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(1px);
-            transform: scale(2);
-            z-index: 100;
-            display: none;
-        }
-
-        .game-won .attempt-circle {
-            background: #28a745;
-            border-color: #28a745;
-            color: white;
-        }
-
-        .game-lost .attempt-circle {
-            background: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-
-        .game-won .attempt-circle.correct {
-            background: #155724;
-            border-color: #155724;
-        }
-
-        .game-won .attempt-circle.franchise {
-            background: #856404;
-            border-color: #856404;
-            color: white;
-        }
-
-        .remaining-attempts {
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
-        .search-container {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .search-input {
-            font-size: 16px;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            transition: border-color 0.3s;
-        }
-
-        .search-input:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-        }
-
-        .search-suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .loading-container {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .loading-container .fa-gamepad {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .no-results, .error-results {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .suggestion-item {
-            padding: 12px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: background-color 0.2s ease;
-        }
-
-        .suggestion-item:hover {
-            background: #f8f9fa;
-        }
-
-        .suggestion-item:last-child {
-            border-bottom: none;
-        }
-
-        .suggestion-item .flex-grow-1 {
-            flex-grow: 1;
-        }
-
-        .service-indicator {
-            margin-left: auto;
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        .attempts-history {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 1px solid #dee2e6;
-        }
-
-        .attempts-history h5 {
-            margin-bottom: 15px;
-            color: #495057;
-        }
-
-        .attempt-result {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border-left: 4px solid;
-        }
-
-        .attempt-result.correct {
-            background: #d4edda;
-            border-color: #28a745;
-        }
-
-        .attempt-result.wrong {
-            background: #f8d7da;
-            border-color: #dc3545;
-        }
-
-        .attempt-result.franchise {
-            background: #fff3cd;
-            border-color: #ffc107;
-        }
-
-        .attempt-result.skipped {
-            background: #e2e3e5;
-            border-color: #6c757d;
-        }
-
-        .result-icon {
-            font-size: 20px;
-        }
-
-        .countdown-timer {
-            text-align: center;
-            font-size: 18px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .guessed-it {
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            font-size: 24px;
-            font-weight: bold;
-            animation: celebration 2s ease-in-out;
-        }
-
-        @keyframes celebration {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .game-ended {
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .btn-skip {
-            background: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-skip:hover {
-            background: #545b62;
-            border-color: #4e555b;
-        }
-
-        .franchise-hint {
-            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-            color: #333;
-            padding: 10px 15px;
-            border-radius: 10px;
-            margin: 10px 0;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .video-type-indicator {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255,165,0,0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body class="bg-light">
-{% csrf_token %}
-
-<div class="container-fluid">
-    <div class="game-container">
-
-        <!-- Header del juego -->
-        <div class="game-header">
-            <div class="igdb-badge">
-                <i class="fas fa-database me-1"></i>IGDB
-            </div>
-
-            <h1 class="mb-2">
-                <i class="fas fa-gamepad me-2"></i>Juego #1
-            </h1>
-            <p class="mb-0">{{ today|date:"j F Y" }}</p>
-
-            <!-- Información de franquicia si está disponible -->
-            {% if game.franchise_name %}
-                <div class="franchise-info">
-                    <i class="fas fa-crown me-2"></i>
-                    <strong>Franquicia:</strong> {{ game.franchise_name }}
-                </div>
-            {% endif %}
-
-            <!-- Botón de prueba (solo en desarrollo) -->
-            <div class="mt-3">
-                <button onclick="generateNewTestGame()" class="btn btn-light btn-sm">
-                    <i class="fas fa-refresh me-1"></i>Nuevo Juego IGDB
-                </button>
-            </div>
+        <!-- Botón de prueba (solo en desarrollo) -->
+        {% if debug %}
+        <div class="mt-3">
+            <button onclick="generateNewTestGame()" class="btn btn-light btn-sm">
+                <i class="fas fa-refresh me-1"></i>Nuevo Juego IGDB
+            </button>
         </div>
+        {% endif %}
+    </div>
 
-        <!-- Contenedor de la imagen principal -->
-        <div class="screenshot-container">
-            {% if screenshots %}
-                <img id="current-screenshot"
-                     src="{% if screenshots.0.local_path %}/media/{{ screenshots.0.local_path }}{% else %}{{ screenshots.0.image_url }}{% endif %}"
-                     alt="Screenshot del juego"
-                     class="screenshot-main">
+    <!-- Contenedor de la imagen principal -->
+    <div class="screenshot-container fade-in">
+        {% if screenshots %}
+            <img id="current-screenshot"
+                 src="{% if screenshots.0.local_path %}/media/{{ screenshots.0.local_path }}{% else %}{{ screenshots.0.image_url }}{% endif %}"
+                 alt="Screenshot del juego"
+                 class="screenshot-main">
 
-                <!-- Información superpuesta -->
-                <div class="game-info-overlay" id="game-info-overlay" style="display: none;">
-                    <div id="info-content">
-                        <!-- La información se mostrará según la imagen -->
-                    </div>
+            <!-- Información superpuesta -->
+            <div class="game-info-overlay" id="game-info-overlay">
+                <div id="info-content">
+                    <!-- La información se mostrará según la imagen -->
                 </div>
+            </div>
 
-                <!-- Indicador de tipo de contenido -->
-                <div class="video-type-indicator" id="content-type-indicator" style="display: none;">
-                    <i class="fas fa-film me-1"></i>Vídeo
+            <!-- Indicador de tipo de contenido -->
+            <div class="video-type-indicator" id="content-type-indicator" style="display: none;">
+                <i class="fas fa-film"></i>
+                <span>Vídeo</span>
+            </div>
+
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No hay capturas disponibles para este juego.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Indicador de intentos clicables -->
+    <div class="attempts-indicator fade-in">
+        {% for i in "123456" %}
+            <div class="attempt-circle" id="attempt-{{ i }}" data-attempt="{{ i }}" onclick="navigateToAttempt({{ i }})">
+                {{ i }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Mensaje de intentos restantes / resultado del juego -->
+    <div class="remaining-attempts fade-in" id="remaining-attempts">
+        {% if game_state.won %}
+            {% if game_state.guessed_it %}
+                <div class="alert alert-success text-center mb-0">
+                    <h4><i class="fas fa-star me-2"></i>¡GUESSED IT!</h4>
+                    <p class="mb-0">¡Acertaste en el primer intento!</p>
                 </div>
-
-                <!-- Overlay para zoom -->
-                <div class="zoom-overlay" id="zoom-overlay"></div>
             {% else %}
-                <div class="alert alert-warning">
-                    No hay capturas disponibles para este juego.
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Indicador de intentos clicables -->
-        <div class="attempts-indicator">
-            {% for i in "123456" %}
-                <div class="attempt-circle" id="attempt-{{ i }}" data-attempt="{{ i }}" onclick="navigateToAttempt({{ i }})">
-                    {{ i }}
-                </div>
-            {% endfor %}
-        </div>
-
-        <!-- Mensaje de intentos restantes / resultado del juego -->
-        <div class="remaining-attempts" id="remaining-attempts">
-            {% if game_state.won %}
-                {% if game_state.guessed_it %}
-                    <div class="alert alert-success text-center mb-0">
-                        <h4><i class="fas fa-star me-2"></i>¡GUESSED IT!</h4>
-                        <p class="mb-0">¡Acertaste en el primer intento!</p>
-                    </div>
-                {% else %}
-                    <div class="alert alert-success text-center mb-0">
-                        <h4><i class="fas fa-trophy me-2"></i>¡Ganaste!</h4>
-                        <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
-                    </div>
-                {% endif %}
-            {% elif game_state.lost %}
-                <div class="alert alert-danger text-center mb-0">
-                    <h4><i class="fas fa-skull me-2"></i>¡Perdiste!</h4>
+                <div class="alert alert-success text-center mb-0">
+                    <h4><i class="fas fa-trophy me-2"></i>¡Ganaste!</h4>
                     <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
                 </div>
-            {% else %}
-                ¡Te quedan 6 intentos!
             {% endif %}
-        </div>
+        {% elif game_state.lost %}
+            <div class="alert alert-danger text-center mb-0">
+                <h4><i class="fas fa-skull me-2"></i>¡Perdiste!</h4>
+                <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
+            </div>
+        {% else %}
+            <span>¡Te quedan 6 intentos!</span>
+        {% endif %}
+    </div>
 
-        <!-- Área de juego principal -->
-        <div id="game-area">
-            {% if not game_state.won and not game_state.lost %}
+    <!-- Área de juego principal -->
+    <div id="game-area" class="fade-in">
+        {% if not game_state.won and not game_state.lost %}
 
-                <!-- Barra de búsqueda -->
-                <div class="search-container">
-                    <div class="input-group">
-                        <input type="text"
-                               class="form-control search-input"
-                               id="game-search"
-                               placeholder="Escribe el nombre del juego..."
-                               autocomplete="off">
-                        <button class="btn btn-secondary btn-skip"
-                                type="button"
-                                id="skip-btn">
-                            <i class="fas fa-forward me-1"></i>Saltar
-                        </button>
-                    </div>
-
-                    <!-- Sugerencias de búsqueda -->
-                    <div class="search-suggestions" id="search-suggestions">
-                        <!-- Se llenarán dinámicamente -->
-                    </div>
-                </div>
-
-                <!-- Botón de envío -->
-                <div class="text-center mb-3">
-                    <button class="btn btn-primary btn-lg"
-                            id="submit-btn"
-                            disabled>
-                        <i class="fas fa-paper-plane me-2"></i>Enviar Respuesta
+            <!-- Barra de búsqueda -->
+            <div class="search-container">
+                <div class="input-group">
+                    <input type="text"
+                           class="form-control search-input"
+                           id="game-search"
+                           placeholder="Escribe el nombre del juego..."
+                           autocomplete="off">
+                    <button class="btn btn-skip"
+                            type="button"
+                            id="skip-btn">
+                        <i class="fas fa-forward me-1"></i>Saltar
                     </button>
                 </div>
 
-            {% endif %}
-
-            <!-- Mensaje de victoria/derrota -->
-            {% if game_state.won %}
-                <div class="alert alert-success text-center">
-                    <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
-                    {% if game.franchise_name %}
-                        <p class="mb-0"><i class="fas fa-crown me-1"></i>Franquicia: <strong>{{ game.franchise_name }}</strong></p>
-                    {% endif %}
+                <!-- Sugerencias de búsqueda -->
+                <div class="search-suggestions" id="search-suggestions">
+                    <!-- Se llenarán dinámicamente -->
                 </div>
-            {% elif game_state.lost %}
-                <div class="alert alert-danger text-center">
-                    <p class="mb-0">¡Más suerte la próxima vez!</p>
-                    {% if game.franchise_name %}
-                        <p class="mb-0"><i class="fas fa-crown me-1"></i>Franquicia: <strong>{{ game.franchise_name }}</strong></p>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Historial de intentos -->
-        <div class="attempts-history" id="attempts-history" style="display: none;">
-            <h5><i class="fas fa-list me-2"></i>Historial de Intentos</h5>
-            <div id="attempts-history-content">
-                <!-- Se llenará dinámicamente -->
             </div>
-        </div>
 
-        <!-- Botones finales -->
-        {% if game_state.won or game_state.lost %}
-        <div class="game-ended">
-            <div class="d-flex justify-content-center gap-3">
-                <button class="btn btn-outline-secondary" onclick="showOtherDays()">
-                    <i class="fas fa-calendar me-2"></i>Ir a días anteriores
+            <!-- Botón de envío -->
+            <div class="text-center mb-4">
+                <button class="btn btn-primary btn-submit"
+                        id="submit-btn"
+                        disabled>
+                    <i class="fas fa-paper-plane me-2"></i>Enviar Respuesta
                 </button>
             </div>
-        </div>
+
         {% endif %}
 
-        <!-- Timer countdown -->
-        <div class="countdown-timer">
-            <i class="fas fa-clock me-2"></i>
-            <span id="countdown-display">Calculando...</span>
-        </div>
-
+        <!-- Mensaje de victoria/derrota -->
+        {% if game_state.won %}
+            <div class="alert alert-success text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <i class="fas fa-trophy me-2 text-warning" style="font-size: 1.5rem;"></i>
+                    <strong>¡Correcto!</strong>
+                </div>
+                <p class="mb-1">La respuesta era: <strong>{{ game.title }}</strong></p>
+                {% if game.franchise_name %}
+                    <p class="mb-0 small">
+                        <i class="fas fa-crown me-1"></i>
+                        Franquicia: <strong>{{ game.franchise_name }}</strong>
+                    </p>
+                {% endif %}
+            </div>
+        {% elif game_state.lost %}
+            <div class="alert alert-danger text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <i class="fas fa-times-circle me-2" style="font-size: 1.5rem;"></i>
+                    <strong>¡Más suerte la próxima vez!</strong>
+                </div>
+                <p class="mb-1">La respuesta era: <strong>{{ game.title }}</strong></p>
+                {% if game.franchise_name %}
+                    <p class="mb-0 small">
+                        <i class="fas fa-crown me-1"></i>
+                        Franquicia: <strong>{{ game.franchise_name }}</strong>
+                    </p>
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
+
+    <!-- Historial de intentos -->
+    <div class="attempts-history" id="attempts-history" style="display: none;">
+        <h5>
+            <i class="fas fa-list me-2"></i>
+            Historial de Intentos
+        </h5>
+        <div id="attempts-history-content">
+            <!-- Se llenará dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Botones finales -->
+    {% if game_state.won or game_state.lost %}
+    <div class="game-ended slide-up">
+        <h6 class="mb-3">
+            <i class="fas fa-calendar-alt me-2"></i>
+            ¿Qué más puedes hacer?
+        </h6>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{% url 'guessityet:game_history' %}" class="btn btn-outline-primary">
+                <i class="fas fa-history me-2"></i>Ver Historial
+            </a>
+            <a href="{% url 'guessityet:how_to_play' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-question-circle me-2"></i>Cómo Jugar
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Timer countdown -->
+    <div class="countdown-timer slide-up">
+        <i class="fas fa-clock me-2"></i>
+        <span id="countdown-display">Calculando...</span>
+    </div>
+
 </div>
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Variables globales del juego -->
 <script>
-    // Variables globales del juego
+    // Datos del juego pasados desde Django
     const gameState = {{ game_state_json|safe }};
     const gameData = {
         id: {{ game.id }},
@@ -589,847 +224,17 @@
         {% endfor %}
     ];
 
-    console.log('Cargando GuessItYet Game...');
-
-    class GuessItYetGame {
-        constructor() {
-            this.searchTimeout = null;
-            this.selectedGame = null;
-            this.currentAttempt = gameState.current_attempt || 1;
-            this.maxAttempts = this.calculateMaxAttempts();
-            this.gameEnded = gameState.won || gameState.lost;
-            this.currentViewingAttempt = this.currentAttempt;
-
-            this.init();
-        }
-
-        calculateMaxAttempts() {
-            const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
-            return hasGif ? 6 : Math.min(screenshots.length, 6);
-        }
-
-        init() {
-            this.setupEventListeners();
-            this.updateAttemptIndicators();
-            this.updateScreenshot();
-            this.updateGameInfo();
-            this.setupImageZoom();
-            this.loadExistingAttempts();
-            this.startCountdown();
-
-            if (this.gameEnded) {
-                this.disableGameControls();
-            }
-        }
-
-        setupImageZoom() {
-            const screenshotImg = document.getElementById('current-screenshot');
-            const screenshotContainer = document.querySelector('.screenshot-container');
-            const zoomOverlay = document.getElementById('zoom-overlay');
-
-            if (!screenshotImg || !screenshotContainer || !zoomOverlay) return;
-
-            screenshotContainer.addEventListener('mousemove', (e) => {
-                const rect = screenshotContainer.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                zoomOverlay.style.left = (x - 50) + 'px';
-                zoomOverlay.style.top = (y - 50) + 'px';
-                zoomOverlay.style.width = '100px';
-                zoomOverlay.style.height = '100px';
-                zoomOverlay.style.display = 'block';
-
-                const bgX = -(x - 50) * 2;
-                const bgY = -(y - 50) * 2;
-                zoomOverlay.style.backgroundImage = `url(${screenshotImg.src})`;
-                zoomOverlay.style.backgroundPosition = `${bgX}px ${bgY}px`;
-                zoomOverlay.style.backgroundSize = `${screenshotImg.width * 2}px ${screenshotImg.height * 2}px`;
-                zoomOverlay.style.backgroundRepeat = 'no-repeat';
-            });
-
-            screenshotContainer.addEventListener('mouseleave', () => {
-                zoomOverlay.style.display = 'none';
-            });
-        }
-
-        setupEventListeners() {
-            const searchInput = document.getElementById('game-search');
-            const submitBtn = document.getElementById('submit-btn');
-            const skipBtn = document.getElementById('skip-btn');
-
-            if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
-                    this.handleSearchInput(e);
-                });
-
-                searchInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && this.selectedGame) {
-                        this.submitGuess();
-                    }
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (!e.target.closest('.search-container')) {
-                        this.hideSuggestions();
-                    }
-                });
-            }
-
-            if (submitBtn) {
-                submitBtn.addEventListener('click', () => {
-                    this.submitGuess();
-                });
-            }
-
-            if (skipBtn) {
-                skipBtn.addEventListener('click', () => {
-                    this.skipTurn();
-                });
-            }
-        }
-
-        handleSearchInput(e) {
-            const query = e.target.value.trim();
-
-            if (this.searchTimeout) {
-                clearTimeout(this.searchTimeout);
-            }
-
-            this.selectedGame = null;
-            this.updateSubmitButton();
-
-            if (query.length < 2) {
-                this.hideSuggestions();
-                return;
-            }
-
-            this.showLoading();
-
-            this.searchTimeout = setTimeout(() => {
-                this.searchGames(query);
-            }, 300);
-        }
-
-        showLoading() {
-            const suggestionsContainer = document.getElementById('search-suggestions');
-            if (!suggestionsContainer) return;
-
-            suggestionsContainer.innerHTML = `
-                <div class="loading-container text-center py-3">
-                    <i class="fas fa-gamepad fa-spin text-primary me-2"></i>
-                    <span class="text-muted">Buscando juegos...</span>
-                </div>
-            `;
-            suggestionsContainer.style.display = 'block';
-        }
-
-        async searchGames(query) {
-            try {
-                const url = `/guessityet/search-games/?q=${encodeURIComponent(query)}&service=igdb&limit=25`;
-                const response = await fetch(url);
-
-                if (!response.ok) {
-                    throw new Error(`Error del servidor: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                if (data.games && data.games.length > 0) {
-                    this.showSuggestions(data.games);
-                } else {
-                    this.showNoResults();
-                }
-            } catch (error) {
-                console.error('Error buscando juegos:', error);
-                this.showError();
-            }
-        }
-
-        showSuggestions(games) {
-            const suggestionsContainer = document.getElementById('search-suggestions');
-            if (!suggestionsContainer) return;
-
-            suggestionsContainer.innerHTML = '';
-
-            games.forEach(game => {
-                const suggestionItem = document.createElement('div');
-                suggestionItem.className = 'suggestion-item';
-
-                let releaseYear = '';
-                if (game.first_release_date) {
-                    if (typeof game.first_release_date === 'number') {
-                        releaseYear = new Date(game.first_release_date * 1000).getFullYear();
-                    }
-                } else if (game.released) {
-                    if (typeof game.released === 'number') {
-                        releaseYear = new Date(game.released * 1000).getFullYear();
-                    } else {
-                        const year = new Date(game.released).getFullYear();
-                        if (!isNaN(year)) {
-                            releaseYear = year;
-                        }
-                    }
-                }
-
-                let additionalInfo = [];
-                if (game.franchise) {
-                    additionalInfo.push(`<span class="text-primary"><i class="fas fa-crown me-1"></i>${game.franchise}</span>`);
-                }
-                if (releaseYear) {
-                    additionalInfo.push(`<span class="text-muted">(${releaseYear})</span>`);
-                }
-
-                const additionalInfoHtml = additionalInfo.length > 0
-                    ? `<div class="small mt-1">${additionalInfo.join(' ')}</div>`
-                    : '';
-
-                suggestionItem.innerHTML = `
-                    <div class="flex-grow-1">
-                        <div class="fw-bold">${game.name}</div>
-                        ${additionalInfoHtml}
-                    </div>
-                    <div class="service-indicator">
-                        <i class="fas fa-database text-success" title="IGDB"></i>
-                    </div>
-                `;
-
-                suggestionItem.addEventListener('click', () => {
-                    this.selectGame(game);
-                });
-
-                suggestionsContainer.appendChild(suggestionItem);
-            });
-
-            suggestionsContainer.style.display = 'block';
-        }
-
-        showNoResults() {
-            const suggestionsContainer = document.getElementById('search-suggestions');
-            if (!suggestionsContainer) return;
-
-            suggestionsContainer.innerHTML = `
-                <div class="no-results text-center py-3 text-muted">
-                    <i class="fas fa-search me-2"></i>
-                    No se encontraron juegos
-                </div>
-            `;
-            suggestionsContainer.style.display = 'block';
-        }
-
-        showError() {
-            const suggestionsContainer = document.getElementById('search-suggestions');
-            if (!suggestionsContainer) return;
-
-            suggestionsContainer.innerHTML = `
-                <div class="error-results text-center py-3 text-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Error en la búsqueda
-                </div>
-            `;
-            suggestionsContainer.style.display = 'block';
-        }
-
-        hideSuggestions() {
-            const suggestionsContainer = document.getElementById('search-suggestions');
-            if (suggestionsContainer) {
-                suggestionsContainer.style.display = 'none';
-            }
-        }
-
-        selectGame(game) {
-            this.selectedGame = { ...game, service: 'igdb' };
-
-            const searchInput = document.getElementById('game-search');
-            if (searchInput) {
-                searchInput.value = game.name;
-            }
-
-            this.hideSuggestions();
-            this.updateSubmitButton();
-        }
-
-        updateSubmitButton() {
-            const submitBtn = document.getElementById('submit-btn');
-            if (submitBtn) {
-                submitBtn.disabled = !this.selectedGame;
-            }
-        }
-
-        async submitGuess() {
-            if (!this.selectedGame) return;
-
-            try {
-                const response = await fetch('/guessityet/submit-guess/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCSRFToken()
-                    },
-                    body: JSON.stringify({
-                        game_name: this.selectedGame.name,
-                        game_id: this.selectedGame.id,
-                        service: 'igdb'
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Error del servidor: ${response.status}`);
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
-                    this.handleGuessResult(result);
-                } else {
-                    console.error('Error en resultado:', result);
-                    alert('Error al procesar la respuesta: ' + (result.error || 'Error desconocido'));
-                }
-            } catch (error) {
-                console.error('Error en submitGuess:', error);
-                //alert('Error de conexión. Por favor, inténtalo de nuevo.');
-            }
-        }
-
-        async skipTurn() {
-            try {
-                const response = await fetch('/guessityet/skip-turn/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.getCSRFToken()
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Error del servidor: ${response.status}`);
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
-                    this.handleSkipResult(result);
-                } else {
-                    console.error('Error en skip:', result);
-                    alert('Error al saltar turno: ' + (result.error || 'Error desconocido'));
-                }
-            } catch (error) {
-                console.error('Error en skipTurn:', error);
-                //alert('Error de conexión. Por favor, inténtalo de nuevo.');
-            }
-        }
-
-        handleGuessResult(result) {
-            this.addAttemptToHistory({
-                attempt: this.currentAttempt,
-                type: 'guess',
-                game_name: this.selectedGame.name,
-                correct: result.correct,
-                franchise_match: result.franchise_match,
-                franchise_name: result.franchise_name
-            });
-
-            this.updateAttemptIndicator(this.currentAttempt, result);
-
-            if (result.correct) {
-                this.handleWin(result);
-            } else {
-                this.currentAttempt = result.current_attempt;
-
-                if (result.lost) {
-                    this.handleLose();
-                } else {
-                    this.nextAttempt();
-                }
-            }
-        }
-
-        handleSkipResult(result) {
-            this.addAttemptToHistory({
-                attempt: this.currentAttempt,
-                type: 'skipped',
-                game_name: 'Turno saltado',
-                correct: false,
-                franchise_match: false
-            });
-
-            this.updateAttemptIndicator(this.currentAttempt, {skipped: true});
-            this.currentAttempt = result.current_attempt;
-
-            if (result.game_ended) {
-                this.handleLose();
-            } else {
-                this.nextAttempt();
-            }
-        }
-
-        updateAttemptIndicators() {
-            for (let i = 1; i <= 6; i++) {
-                const circle = document.getElementById(`attempt-${i}`);
-                if (circle) {
-                    circle.classList.remove('current', 'correct', 'wrong', 'franchise', 'skipped', 'clickable', 'disabled', 'selected');
-
-                    if (i > this.maxAttempts) {
-                        circle.style.display = 'none';
-                    } else {
-                        circle.style.display = 'flex';
-
-                        // Determinar si es clicable
-                        const maxAvailable = this.gameEnded ? this.maxAttempts : this.currentAttempt;
-                        if (i <= maxAvailable) {
-                            circle.classList.add('clickable');
-                            circle.style.cursor = 'pointer';
-                        } else {
-                            circle.classList.add('disabled');
-                            circle.style.cursor = 'not-allowed';
-                        }
-
-                        // Marcar el turno actual (azul)
-                        if (i === this.currentAttempt && !this.gameEnded) {
-                            circle.classList.add('current');
-                        }
-
-                        // Resaltar la posición de visualización actual
-                        if (i === this.currentViewingAttempt) {
-                            circle.style.fontWeight = '900';
-                            circle.style.textShadow = '0 0 2px rgba(0,0,0,0.5)';
-                            circle.style.transform = 'translateY(1px)';
-                            circle.style.fontSize = '16px';
-                        } else {
-                            circle.style.fontWeight = 'bold';
-                            circle.style.textShadow = 'none';
-                            circle.style.transform = 'translateY(0)';
-                            circle.style.fontSize = '14px';
-                        }
-                    }
-                }
-            }
-
-            if (gameState.attempts) {
-                gameState.attempts.forEach(attempt => {
-                    this.updateAttemptIndicator(attempt.attempt, attempt);
-                });
-            }
-        }
-
-        updateAttemptIndicator(attemptNum, result) {
-            const circle = document.getElementById(`attempt-${attemptNum}`);
-            if (!circle) return;
-
-            circle.classList.remove('current');
-
-            if (result.correct) {
-                circle.classList.add('correct');
-            } else if (result.franchise_match) {
-                circle.classList.add('franchise');
-            } else if (result.skipped || result.type === 'skipped') {
-                circle.classList.add('skipped');
-            } else {
-                circle.classList.add('wrong');
-            }
-        }
-
-        updateScreenshot() {
-            this.currentViewingAttempt = this.currentAttempt;
-            this.showScreenshotForAttempt(this.currentAttempt);
-        }
-
-        showScreenshotForAttempt(attemptNum) {
-            const screenshotImg = document.getElementById('current-screenshot');
-            const contentIndicator = document.getElementById('content-type-indicator');
-
-            const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
-            const isLastAttempt = attemptNum === this.maxAttempts;
-
-            if (isLastAttempt && hasGif) {
-                if (screenshotImg) {
-                    screenshotImg.src = `/media/${gameData.gif_path}`;
-                    screenshotImg.alt = 'GIF del juego';
-                }
-                if (contentIndicator) {
-                    contentIndicator.style.display = 'block';
-                }
-            } else {
-                const screenshot = screenshots.find(s => s.difficulty === attemptNum);
-                if (screenshot && screenshotImg) {
-                    screenshotImg.src = screenshot.url;
-                    screenshotImg.alt = `Screenshot del juego - Nivel ${attemptNum}`;
-                }
-                if (contentIndicator) {
-                    contentIndicator.style.display = 'none';
-                }
-            }
-
-            this.currentViewingAttempt = attemptNum;
-        }
-
-        updateGameInfo() {
-            const infoContent = document.getElementById('info-content');
-            const infoOverlay = document.getElementById('game-info-overlay');
-            const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
-            const isLastAttempt = this.currentViewingAttempt === this.maxAttempts;
-
-            let infoText = '';
-
-            if (this.currentViewingAttempt === 1) {
-                // Imagen 1: sin información, ocultar overlay
-                infoOverlay.style.display = 'none';
-                return;
-            } else if (isLastAttempt && hasGif) {
-                // Último intento con GIF: mostrar desarrolladora
-                if (gameData.developer) {
-                    infoText = `Desarrolladora: ${gameData.developer}`;
-                }
-            } else {
-                // Resto de imágenes según el número
-                switch(this.currentViewingAttempt) {
-                    case 2:
-                        if (gameData.genres) {
-                            infoText = `Género/s: ${gameData.genres}`;
-                        }
-                        break;
-                    case 3:
-                        if (gameData.platforms) {
-                            infoText = `Plataforma/s: ${gameData.platforms}`;
-                        }
-                        break;
-                    case 4:
-                        if (gameData.metacritic) {
-                            infoText = `Nota en Metacritic: ${gameData.metacritic}/100`;
-                        }
-                        break;
-                    case 5:
-                        if (gameData.release_year) {
-                            infoText = `Año de salida: ${gameData.release_year}`;
-                        }
-                        break;
-                    case 6:
-                        if (gameData.developer) {
-                            infoText = `Desarrolladora: ${gameData.developer}`;
-                        }
-                        break;
-                }
-            }
-
-            if (infoText && infoContent) {
-                infoContent.innerHTML = infoText;
-                infoOverlay.style.display = 'block';
-            } else {
-                infoOverlay.style.display = 'none';
-            }
-        }
-
-        addAttemptToHistory(attempt) {
-            const historyContainer = document.getElementById('attempts-history-content');
-            const historySection = document.getElementById('attempts-history');
-
-            if (!historyContainer || !historySection) return;
-
-            // Mostrar el historial si es el primer intento
-            if (historySection.style.display === 'none') {
-                historySection.style.display = 'block';
-            }
-
-            const attemptDiv = document.createElement('div');
-            let className = 'attempt-result ';
-            let icon = '';
-            let extraText = '';
-
-            if (attempt.correct) {
-                className += 'correct';
-                icon = '<i class="fas fa-check text-success"></i>';
-            } else if (attempt.franchise_match) {
-                className += 'franchise';
-                icon = '<i class="fas fa-exclamation-triangle text-warning"></i>';
-                const franchiseName = attempt.franchise_name || 'Franquicia correcta';
-                extraText = `<br><small class="text-muted">${franchiseName}</small>`;
-            } else if (attempt.type === 'skipped') {
-                className += 'skipped';
-                icon = '<i class="fas fa-forward text-muted"></i>';
-            } else {
-                className += 'wrong';
-                icon = '<i class="fas fa-times text-danger"></i>';
-            }
-
-            attemptDiv.className = className;
-            attemptDiv.innerHTML = `
-                <div class="result-icon">${icon}</div>
-                <div class="flex-grow-1">
-                    <strong>Intento ${attempt.attempt}:</strong> ${attempt.game_name}
-                    <span class="badge bg-success ms-2" title="IGDB"><i class="fas fa-database"></i></span>
-                    ${extraText}
-                </div>
-            `;
-
-            historyContainer.insertBefore(attemptDiv, historyContainer.firstChild);
-        }
-
-        loadExistingAttempts() {
-            const historyContainer = document.getElementById('attempts-history-content');
-            const historySection = document.getElementById('attempts-history');
-
-            if (!historyContainer || !historySection) return;
-
-            historyContainer.innerHTML = '';
-
-            if (!gameState.attempts || gameState.attempts.length === 0) {
-                // Mantener oculto si no hay intentos
-                historySection.style.display = 'none';
-                return;
-            }
-
-            // Mostrar historial si hay intentos
-            historySection.style.display = 'block';
-
-            const reversedAttempts = [...gameState.attempts].reverse();
-
-            reversedAttempts.forEach(attempt => {
-                const attemptDiv = document.createElement('div');
-                let className = 'attempt-result ';
-                let icon = '';
-                let extraText = '';
-
-                if (attempt.correct) {
-                    className += 'correct';
-                    icon = '<i class="fas fa-check text-success"></i>';
-                } else if (attempt.franchise_match) {
-                    className += 'franchise';
-                    icon = '<i class="fas fa-exclamation-triangle text-warning"></i>';
-                    const franchiseName = attempt.franchise_name || 'Franquicia correcta';
-                    extraText = `<br><small class="text-muted">${franchiseName}</small>`;
-                } else if (attempt.type === 'skipped') {
-                    className += 'skipped';
-                    icon = '<i class="fas fa-forward text-muted"></i>';
-                } else {
-                    className += 'wrong';
-                    icon = '<i class="fas fa-times text-danger"></i>';
-                }
-
-                attemptDiv.className = className;
-                attemptDiv.innerHTML = `
-                    <div class="result-icon">${icon}</div>
-                    <div class="flex-grow-1">
-                        <strong>Intento ${attempt.attempt}:</strong> ${attempt.game_name}
-                        <span class="badge bg-success ms-2" title="IGDB"><i class="fas fa-database"></i></span>
-                        ${extraText}
-                    </div>
-                `;
-
-                historyContainer.appendChild(attemptDiv);
-            });
-        }
-
-        nextAttempt() {
-            this.updateScreenshot();
-            this.updateGameInfo();
-            this.updateRemainingAttempts();
-            this.clearSearchInput();
-            this.updateAttemptIndicators();
-        }
-
-        updateRemainingAttempts() {
-            const remainingDiv = document.getElementById('remaining-attempts');
-
-            if (remainingDiv && !this.gameEnded) {
-                // Siempre empezar con 6 intentos, independientemente del maxAttempts
-                const remaining = 6 - this.currentAttempt + 1;
-
-                if (remaining > 0) {
-                    remainingDiv.innerHTML = `¡Te quedan ${remaining} intentos!`;
-                }
-            }
-        }
-
-        handleWin(result) {
-            this.gameEnded = true;
-
-            // Actualizar el mensaje de intentos restantes
-            const remainingDiv = document.getElementById('remaining-attempts');
-            if (remainingDiv) {
-                if (result.guessed_it) {
-                    remainingDiv.innerHTML = `
-                        <div class="alert alert-success text-center mb-0">
-                            <h4><i class="fas fa-star me-2"></i>¡GUESSED IT!</h4>
-                            <p class="mb-0">¡Acertaste en el primer intento!</p>
-                        </div>
-                    `;
-                } else {
-                    remainingDiv.innerHTML = `
-                        <div class="alert alert-success text-center mb-0">
-                            <h4><i class="fas fa-trophy me-2"></i>¡Ganaste!</h4>
-                            <p class="mb-0">La respuesta correcta era: <strong>${result.game_name}</strong></p>
-                        </div>
-                    `;
-                }
-            }
-
-            const attemptsContainer = document.querySelector('.attempts-indicator');
-            if (attemptsContainer) {
-                attemptsContainer.classList.add('game-won');
-            }
-
-            for (let i = 1; i <= this.maxAttempts; i++) {
-                const circle = document.getElementById(`attempt-${i}`);
-                if (circle && !circle.classList.contains('correct') && !circle.classList.contains('franchise')) {
-                    circle.classList.remove('current', 'wrong', 'skipped');
-                    circle.classList.add('correct');
-                    circle.style.cursor = 'pointer';
-                }
-            }
-
-            this.disableGameControls();
-            this.showEndGameButtons();
-        }
-
-        handleLose() {
-            this.gameEnded = true;
-
-            // Actualizar el mensaje de intentos restantes
-            const remainingDiv = document.getElementById('remaining-attempts');
-            if (remainingDiv) {
-                remainingDiv.innerHTML = `
-                    <div class="alert alert-danger text-center mb-0">
-                        <h4><i class="fas fa-skull me-2"></i>¡Perdiste!</h4>
-                        <p class="mb-0">La respuesta correcta era: <strong>${gameData.title}</strong></p>
-                    </div>
-                `;
-            }
-
-            const attemptsContainer = document.querySelector('.attempts-indicator');
-            if (attemptsContainer) {
-                attemptsContainer.classList.add('game-lost');
-            }
-
-            for (let i = 1; i <= this.maxAttempts; i++) {
-                const circle = document.getElementById(`attempt-${i}`);
-                if (circle && !circle.classList.contains('correct') && !circle.classList.contains('franchise')) {
-                    circle.classList.remove('current');
-                    circle.classList.add('wrong');
-                }
-            }
-
-            this.disableGameControls();
-            this.showEndGameButtons();
-        }
-
-        clearSearchInput() {
-            const searchInput = document.getElementById('game-search');
-            if (searchInput) {
-                searchInput.value = '';
-            }
-            this.selectedGame = null;
-            this.updateSubmitButton();
-            this.hideSuggestions();
-        }
-
-        showEndGameButtons() {
-            const gameEndedDiv = document.querySelector('.game-ended');
-            if (!gameEndedDiv) {
-                const gameArea = document.getElementById('game-area');
-                const endDiv = document.createElement('div');
-                endDiv.className = 'game-ended text-center mt-4';
-                endDiv.innerHTML = `
-                    <div class="d-flex justify-content-center gap-3">
-                        <button class="btn btn-outline-secondary" onclick="showOtherDays()">
-                            <i class="fas fa-calendar me-2"></i>Ir a días anteriores
-                        </button>
-                    </div>
-                `;
-
-                gameArea.appendChild(endDiv);
-            }
-        }
-
-        startCountdown() {
-            const countdownDisplay = document.getElementById('countdown-display');
-            if (!countdownDisplay) return;
-
-            const updateCountdown = () => {
-                try {
-                    const now = new Date();
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    tomorrow.setHours(0, 0, 0, 0);
-
-                    const timeLeft = tomorrow.getTime() - now.getTime();
-
-                    if (timeLeft <= 0) {
-                        countdownDisplay.textContent = 'Un nuevo juego disponible - Recarga la página';
-                        return;
-                    }
-
-                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-                    countdownDisplay.textContent = `Un nuevo juego en ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-                } catch (error) {
-                    console.error('Error en countdown:', error);
-                    countdownDisplay.textContent = 'Error calculando tiempo';
-                }
-            };
-
-            updateCountdown();
-            setInterval(updateCountdown, 1000);
-        }
-
-        getCSRFToken() {
-            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-            if (csrfMeta) {
-                return csrfMeta.getAttribute('content');
-            }
-
-            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-            if (csrfInput) {
-                return csrfInput.value;
-            }
-
-            const cookies = document.cookie.split(';');
-            for (let cookie of cookies) {
-                const [name, value] = cookie.trim().split('=');
-                if (name === 'csrftoken') {
-                    return value;
-                }
-            }
-
-            return '';
-        }
-    }
-
-    // Función global para navegar a un intento específico
-    function navigateToAttempt(attemptNum) {
-        const game = window.guessItYetGame;
-        if (!game) return;
-
-        const maxAvailable = game.gameEnded ? game.maxAttempts : game.currentAttempt;
-
-        if (attemptNum >= 1 && attemptNum <= maxAvailable) {
-            game.currentViewingAttempt = attemptNum;
-            game.showScreenshotForAttempt(attemptNum);
-            game.updateGameInfo();
-            game.updateAttemptIndicators(); // ← Esta línea es clave
-        }
-    }
-
-    // Funciones globales
-    function showOtherDays() {
-        alert('Función "Ir a días anteriores" estará disponible próximamente');
-    }
-
-    // Inicializar el juego
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof gameState === 'undefined' || typeof gameData === 'undefined' || typeof screenshots === 'undefined') {
-            console.error('Variables del juego no están definidas');
-            return;
-        }
-
-        const game = new GuessItYetGame();
-        window.guessItYetGame = game;
-
-        console.log('Juego IGDB inicializado correctamente');
-    });
+    // Debug info
+    console.log('Game Data:', gameData);
+    console.log('Game State:', gameState);
+    console.log('Screenshots:', screenshots);
 </script>
+{% endblock %}
 
+{% block extra_js %}
+<script src="{% static 'js/daily_game.js' %}"></script>
+
+{% if debug %}
 <script>
 // Función para generar nuevo juego de prueba con IGDB
 async function generateNewTestGame() {
@@ -1440,25 +245,172 @@ async function generateNewTestGame() {
     button.disabled = true;
 
     try {
-        const response = await fetch('/guessityet/new-test-game-igdb/', {
+        const response = await fetch('/guessityet/nuevo-juego-igdb/', {
             method: 'GET'
         });
 
         if (response.ok) {
-            window.location.reload();
+            // Mostrar mensaje de éxito
+            showSuccessMessage('Nuevo juego generado correctamente');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } else {
-            alert('Error al generar nuevo juego');
+            showErrorMessage('Error al generar nuevo juego');
             button.innerHTML = originalText;
             button.disabled = false;
         }
     } catch (error) {
         console.error('Error:', error);
-        //alert('Error de conexión');
+        showErrorMessage('Error de conexión');
         button.innerHTML = originalText;
         button.disabled = false;
     }
 }
-</script>
 
-</body>
-</html>
+// Funciones adicionales de debug
+function debugGameState() {
+    console.log('=== DEBUG GAME STATE ===');
+    console.log('Current attempt:', gameState.current_attempt);
+    console.log('Won:', gameState.won);
+    console.log('Lost:', gameState.lost);
+    console.log('Attempts:', gameState.attempts);
+    console.log('========================');
+}
+
+function debugScreenshots() {
+    console.log('=== DEBUG SCREENSHOTS ===');
+    screenshots.forEach((shot, index) => {
+        console.log(`Screenshot ${index + 1}:`, shot);
+    });
+    console.log('=========================');
+}
+
+// Hacer funciones disponibles globalmente en debug
+window.debugGameState = debugGameState;
+window.debugScreenshots = debugScreenshots;
+</script>
+{% endif %}
+
+<script>
+// Funciones globales adicionales
+function showOtherDays() {
+    // Implementar navegación a historial de juegos
+    window.location.href = "{% url 'guessityet:game_history' %}";
+}
+
+function shareResult() {
+    if (navigator.share && (gameState.won || gameState.lost)) {
+        const resultText = gameState.won
+            ? `¡Adiviné el juego en ${gameState.current_attempt - 1} intentos!`
+            : '¡No pude adivinar el juego de hoy!';
+
+        navigator.share({
+            title: 'Guess It Yet? - Resultado',
+            text: `${resultText} ¿Puedes hacerlo mejor?`,
+            url: window.location.origin
+        }).catch(console.error);
+    } else {
+        // Fallback: copiar al portapapeles
+        const resultText = gameState.won
+            ? `¡Adiviné el juego en ${gameState.current_attempt - 1} intentos!`
+            : '¡No pude adivinar el juego de hoy!';
+
+        const shareText = `${resultText} Juega en ${window.location.origin}`;
+
+        navigator.clipboard.writeText(shareText).then(() => {
+            showSuccessMessage('Resultado copiado al portapapeles');
+        }).catch(() => {
+            showInfoMessage('Resultado: ' + shareText);
+        });
+    }
+}
+
+// Event listeners adicionales
+document.addEventListener('DOMContentLoaded', function() {
+    // Añadir keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Escape para cerrar sugerencias
+        if (e.key === 'Escape') {
+            const suggestions = document.getElementById('search-suggestions');
+            if (suggestions && suggestions.style.display !== 'none') {
+                suggestions.style.display = 'none';
+            }
+        }
+
+        // Números 1-6 para navegar entre intentos
+        if (e.key >= '1' && e.key <= '6') {
+            const attemptNum = parseInt(e.key);
+            if (window.guessItYetGame) {
+                navigateToAttempt(attemptNum);
+            }
+        }
+
+        // Enter en el input de búsqueda
+        if (e.key === 'Enter' && e.target.id === 'game-search') {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.click();
+            }
+        }
+    });
+
+    // Añadir efectos de hover mejorados
+    const attemptCircles = document.querySelectorAll('.attempt-circle');
+    attemptCircles.forEach(circle => {
+        circle.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('disabled')) {
+                this.style.transform = 'translateY(-2px) scale(1.05)';
+            }
+        });
+
+        circle.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('current')) {
+                this.style.transform = '';
+            }
+        });
+    });
+
+    // Añadir animación al cargar
+    const elements = document.querySelectorAll('.fade-in');
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+
+// Función para navegar a un intento específico (mantener compatibilidad)
+function navigateToAttempt(attemptNum) {
+    if (window.guessItYetGame) {
+        const game = window.guessItYetGame;
+        const maxAvailable = game.gameEnded ? game.maxAttempts : game.currentAttempt;
+
+        if (attemptNum >= 1 && attemptNum <= maxAvailable) {
+            game.currentViewingAttempt = attemptNum;
+            game.showScreenshotForAttempt(attemptNum);
+            game.updateGameInfo();
+            game.updateAttemptIndicators();
+        }
+    }
+}
+
+// Detectar si es dispositivo móvil para ajustes específicos
+const isMobile = window.innerWidth <= 768;
+if (isMobile) {
+    // Ajustes específicos para móvil
+    document.addEventListener('DOMContentLoaded', function() {
+        // Reducir animaciones en móvil para mejor rendimiento
+        const style = document.createElement('style');
+        style.textContent = `
+            @media (max-width: 768px) {
+                * {
+                    animation-duration: 0.2s !important;
+                    transition-duration: 0.2s !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+}
+</script>
+{% endblock %}

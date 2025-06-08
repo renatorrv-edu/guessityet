@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Juegos - Guess It Yet?{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages.css' %}">
+<link rel="stylesheet" href="{% static 'css/game_history.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header de la página -->
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-history me-2"></i>
+            Historial de Juegos
+        </h1>
+        <p class="mb-0">Explora todos los juegos diarios anteriores</p>
+    </div>
+
+    <!-- Resumen de estadísticas -->
+    <div class="stats-summary">
+        <h5 class="mb-3 text-center">
+            <i class="fas fa-chart-bar me-2"></i>
+            Resumen General
+        </h5>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ total_games }}</div>
+                <div class="stat-label">Total Juegos</div>
+            </div>
+            {% if user.is_authenticated %}
+                <div class="stat-item">
+                    <div class="stat-value">{{ user_stats.played|default:0 }}</div>
+                    <div class="stat-label">Jugados</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ user_stats.won|default:0 }}</div>
+                    <div class="stat-label">Ganados</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ user_stats.win_rate|default:0 }}%</div>
+                    <div class="stat-label">Tasa Éxito</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-card">
+        <h6 class="mb-3">
+            <i class="fas fa-filter me-2"></i>
+            Filtros
+        </h6>
+        <form method="get" id="filters-form">
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label class="filter-label">Buscar por título</label>
+                    <input type="text"
+                           name="search"
+                           class="filter-input"
+                           placeholder="Nombre del juego..."
+                           value="{{ request.GET.search }}">
+                </div>
+
+                <div class="filter-item">
+                    <label class="filter-label">Estado</label>
+                    <select name="status" class="filter-input">
+                        <option value="">Todos los juegos</option>
+                        {% if user.is_authenticated %}
+                            <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completados</option>
+                            <option value="failed" {% if request.GET.status == 'failed' %}selected{% endif %}>Fallidos</option>
+                            <option value="not_played" {% if request.GET.status == 'not_played' %}selected{% endif %}>Sin jugar</option>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label class="filter-label">Ordenar por</label>
+                    <select name="order" class="filter-input">
+                        <option value="-date" {% if request.GET.order == '-date' %}selected{% endif %}>Más recientes</option>
+                        <option value="date" {% if request.GET.order == 'date' %}selected{% endif %}>Más antiguos</option>
+                        <option value="title" {% if request.GET.order == 'title' %}selected{% endif %}>Título A-Z</option>
+                        <option value="-title" {% if request.GET.order == '-title' %}selected{% endif %}>Título Z-A</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label class="filter-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Grid de juegos -->
+    {% if daily_games %}
+        <div class="game-grid">
+            {% for daily_game in daily_games %}
+                <div class="game-card" onclick="viewGame('{{ daily_game.date|date:'Y-m-d' }}')">
+                    <div class="game-thumbnail">
+                        {% if daily_game.game.screenshot_set.first %}
+                            <img src="{% if daily_game.game.screenshot_set.first.local_path %}/media/{{ daily_game.game.screenshot_set.first.local_path }}{% else %}{{ daily_game.game.screenshot_set.first.image_url }}{% endif %}"
+                                 alt="{{ daily_game.game.title }}">
+                        {% else %}
+                            <i class="fas fa-gamepad"></i>
+                        {% endif %}
+
+                        <div class="game-date">
+                            {{ daily_game.date|date:"j M" }}
+                        </div>
+
+                        {% if user.is_authenticated %}
+                            <div class="completion-badge
+                                {% if daily_game.user_attempt %}
+                                    {% if daily_game.user_attempt.success %}completed{% else %}failed{% endif %}
+                                {% else %}
+                                    not-played
+                                {% endif %}">
+                                {% if daily_game.user_attempt %}
+                                    {% if daily_game.user_attempt.success %}
+                                        {{ daily_game.user_attempt.attempts_used }}
+                                    {% else %}
+                                        <i class="fas fa-times"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fas fa-question"></i>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="game-info">
+                        <div class="game-title">{{ daily_game.game.title }}</div>
+
+                        <div class="game-meta">
+                            <div>
+                                <i class="fas fa-calendar"></i>
+                                {{ daily_game.date|date:"l, j \d\e F" }}
+                            </div>
+                            {% if daily_game.game.developer %}
+                                <div>
+                                    <i class="fas fa-code"></i>
+                                    {{ daily_game.game.developer }}
+                                </div>
+                            {% endif %}
+                            {% if daily_game.game.release_year %}
+                                <div>
+                                    <i class="fas fa-clock"></i>
+                                    {{ daily_game.game.release_year }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="game-stats">
+                            {% if user.is_authenticated and daily_game.user_attempt %}
+                                <div class="game-result {% if daily_game.user_attempt.success %}completed{% else %}failed{% endif %}">
+                                    {% if daily_game.user_attempt.success %}
+                                        <i class="fas fa-trophy"></i>
+                                        Ganado en {{ daily_game.user_attempt.attempts_used }} intento{{ daily_game.user_attempt.attempts_used|pluralize }}
+                                    {% else %}
+                                        <i class="fas fa-times"></i>
+                                        No completado
+                                    {% endif %}
+                                </div>
+                            {% elif user.is_authenticated %}
+                                <div class="game-result not-played">
+                                    <i class="fas fa-question"></i>
+                                    Sin jugar
+                                </div>
+                            {% else %}
+                                <div class="game-result">
+                                    <i class="fas fa-gamepad"></i>
+                                    Disponible
+                                </div>
+                            {% endif %}
+
+                            <div class="game-actions">
+                                <button class="btn-view" onclick="event.stopPropagation(); viewGame('{{ daily_game.date|date:'Y-m-d' }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-gamepad"></i>
+            <h4>No hay juegos disponibles</h4>
+            <p>{% if request.GET.search %}No se encontraron juegos que coincidan con tu búsqueda.{% else %}Aún no hay juegos en el historial.{% endif %}</p>
+            {% if request.GET.search %}
+                <a href="{% url 'guessityet:game_history' %}" class="btn btn-primary">
+                    <i class="fas fa-list me-2"></i>Ver Todos los Juegos
+                </a>
+            {% else %}
+                <a href="{% url 'guessityet:daily_game' %}" class="btn btn-primary">
+                    <i class="fas fa-play me-2"></i>Jugar Ahora
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewGame(date) {
+    window.location.href = `/guessityet/historial/${date}/`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit del formulario de filtros con debounce
+    const searchInput = document.querySelector('input[name="search"]');
+    const selectInputs = document.querySelectorAll('select');
+    let searchTimeout;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                document.getElementById('filters-form').submit();
+            }, 500);
+        });
+    }
+
+    selectInputs.forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filters-form').submit();
+        });
+    });
+
+    // Animación de entrada para las tarjetas
+    const gameCards = document.querySelectorAll('.game-card');
+    gameCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+
+        setTimeout(() => {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+});
+</script>
+{% endblock %}
