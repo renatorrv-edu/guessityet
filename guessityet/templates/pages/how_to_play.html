@@ -6,13 +6,292 @@
 {% block meta_description %}Aprende cómo jugar a GuessItYet. Reglas, consejos y estrategias para adivinar videojuegos.{% endblock %}
 
 {% block content %}
-<div class="page-container">
-    <div class="page-header text-center mb-5">
-        <h1><i class="fas fa-question-circle me-2"></i>Cómo Jugar</h1>
-        <p class="lead text-muted">Aprende las reglas de GuessItYet</p>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-xl-10 px-4">
+            <div class="page-header text-center mb-4 py-4">
+                <h1><i class="fas fa-question-circle me-2"></i>Cómo Jugar</h1>
+                <p class="lead text-muted">Descubre las reglas y mecánicas de GuessItYet</p>
+            </div>
+
+    <!-- Objetivo del juego -->
+    <section class="mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-5">
+                        <h2 class="h3 mb-3 text-primary">
+                            <i class="fas fa-bullseye me-2"></i>
+                            El Objetivo
+                        </h2>
+                        <p class="lead mb-0">
+                            Adivina el videojuego usando las capturas de pantalla que se revelan progresivamente.
+                            Tienes hasta 6 intentos para acertar, y cada imagen te dará más pistas sobre el juego.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cómo funciona -->
+    <section class="mb-5">
+        <h2 class="text-center mb-4">
+            <i class="fas fa-cogs me-2"></i>
+            Cómo Funciona
+        </h2>
+
+        <div class="row">
+            <!-- Paso 1 -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="step-card text-center h-100">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Observa la imagen</h3>
+                        <p>Comienza con la captura más difícil. Analiza cada detalle: interfaz, gráficos, elementos del juego.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 2 -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="step-card text-center h-100">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Busca el juego</h3>
+                        <p>Usa el buscador para encontrar el juego que crees que es. Te sugerirá opciones mientras escribes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 3 -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="step-card text-center h-100">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Envía tu respuesta</h3>
+                        <p>Selecciona el juego y confirma tu elección. Si no aciertas, podrás ver la siguiente captura.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 4 -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="step-card text-center h-100">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Repite o celebra</h3>
+                        <p>Si aciertas, ¡felicidades! Si no, sigue intentando con capturas más fáciles hasta agotarse los intentos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sistema de puntuación -->
+    <section class="mb-5">
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            <i class="fas fa-trophy me-2 text-warning"></i>
+                            Sistema de Puntuación
+                        </h3>
+                        <p class="card-text mb-3">
+                            Las capturas se ordenan por dificultad, de la más complicada a la más obvia:
+                        </p>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="fw-bold text-success">Intento 1-2</div>
+                                <small class="text-muted">Experto</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-warning">Intento 3-4</div>
+                                <small class="text-muted">Intermedio</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fw-bold text-info">Intento 5-6</div>
+                                <small class="text-muted">Principiante</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            <i class="fas fa-star me-2 text-warning"></i>
+                            ¿Qué es un "Guessed It!"?
+                        </h3>
+                        <p class="card-text">
+                            Un <strong>Guessed It!</strong> significa que adivinaste el juego en el primer intento,
+                            usando solo la captura más difícil. Es la máxima demostración de conocimiento sobre videojuegos.
+                        </p>
+                        <div class="text-center">
+                            <span class="badge bg-gradient text-white px-3 py-2" style="background: linear-gradient(45deg, #ffd700, #ffed4e);">
+                                <i class="fas fa-star me-1"></i>
+                                ¡Guessed It!
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ventajas de registrarse -->
+    <section class="mb-5">
+        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-body text-white">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h3 class="mb-3">
+                            <i class="fas fa-user-plus me-2"></i>
+                            ¿Por qué registrarse?
+                        </h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-chart-line me-3 mt-1"></i>
+                                    <div>
+                                        <h5 class="mb-1">Estadísticas personales</h5>
+                                        <p class="mb-0 opacity-90">Guarda tu progreso, racha actual, porcentaje de aciertos y mucho más.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-history me-3 mt-1"></i>
+                                    <div>
+                                        <h5 class="mb-1">Historial completo</h5>
+                                        <p class="mb-0 opacity-90">Revisa todos los juegos que has jugado y cómo los resolviste.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-share me-3 mt-1"></i>
+                                    <div>
+                                        <h5 class="mb-1">Comparte resultados</h5>
+                                        <p class="mb-0 opacity-90">Presume tus Guessed It! y reta a tus amigos a superarte.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-trophy me-3 mt-1"></i>
+                                    <div>
+                                        <h5 class="mb-1">Logros y rachas</h5>
+                                        <p class="mb-0 opacity-90">Mantén tu racha de victorias y desbloquea logros especiales.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-center">
+                        <i class="fas fa-user-circle" style="font-size: 8rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Retar a amigos -->
+    <section class="mb-5">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <h3 class="mb-3">
+                            <i class="fas fa-users me-2 text-primary"></i>
+                            Reta a tus Amigos
+                        </h3>
+                        <p class="mb-4">
+                            Después de completar el juego diario, puedes compartir tus resultados con amigos registrados.
+                            Envíales un mensaje diciéndoles en cuántos intentos lo resolviste y desafíalos a que lo intenten superar.
+                        </p>
+                        <div class="bg-light rounded p-3 mb-4">
+                            <strong>Ejemplo de mensaje:</strong><br>
+                            <em>"¡Conseguí un Guessed It! en el juego de hoy! 🎮⭐ ¿Puedes superarme?"</em>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Nota: Solo los usuarios registrados pueden recibir y enviar desafíos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Consejos -->
+    <section class="mb-5">
+        <h3 class="text-center mb-4">
+            <i class="fas fa-lightbulb me-2"></i>
+            Consejos para Mejorar
+        </h3>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-eye text-primary mb-3" style="font-size: 2rem;"></i>
+                        <h5>Fíjate en los detalles</h5>
+                        <p class="card-text">Observa la interfaz, los colores, el estilo artístico y cualquier texto visible.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-gamepad text-primary mb-3" style="font-size: 2rem;"></i>
+                        <h5>Conoce los géneros</h5>
+                        <p class="card-text">Familiarízate con diferentes tipos de juegos y sus características visuales únicas.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar text-primary mb-3" style="font-size: 2rem;"></i>
+                        <h5>Juega a diario</h5>
+                        <p class="card-text">La práctica hace al maestro. Cada día hay un nuevo desafío esperándote.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to action -->
+    <section class="text-center mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm bg-primary text-white">
+                    <div class="card-body p-4">
+                        <h3 class="mb-3">¿Listo para el Desafío?</h3>
+                        <p class="mb-4">¡Pon a prueba tus conocimientos sobre videojuegos y conviértete en un experto de GuessItYet!</p>
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            <a href="{% url 'guessityet:daily_game' %}" class="btn btn-outline-light btn-lg text-decoration-none">
+                                <i class="fas fa-play me-2"></i>
+                                Jugar Ahora
+                            </a>
+                            {% if not user.is_authenticated %}
+                            <a href="{% url 'guessityet:register' %}" class="btn btn-outline-light btn-lg text-decoration-none">
+                                <i class="fas fa-user-plus me-2"></i>
+                                Registrarse
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+        </div>
     </div>
-    
-    <!-- Contenido de instrucciones se desarrollará aquí -->
-    
 </div>
 {% endblock %}

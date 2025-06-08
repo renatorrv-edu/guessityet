@@ -1,0 +1,80 @@
+name: Deploy GuessItYet to AWS EC2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Permite ejecutar manualmente
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run tests
+      run: |
+        python manage.py check
+        # python manage.py test  # Descomenta si tienes tests
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/guessityet:latest
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /var/www/guessityet
+          
+          # Pull latest code
+          git pull origin main
+          
+          # Pull new Docker image
+          docker pull ${{ secrets.DOCKER_USERNAME }}/guessityet:latest
+          
+          # Update docker-compose to use the new image
+          sed -i 's|build: \.|image: ${{ secrets.DOCKER_USERNAME }}/guessityet:latest|g' docker-compose.yml
+          
+          # Deploy
+          docker-compose down
+          docker-compose up -d
+          
+          # Wait for services to be ready
+          sleep 30
+          
+          # Run migrations if needed
+          docker-compose exec -T web python manage.py migrate
+          docker-compose exec -T web python manage.py collectstatic --noinput
+          
+          # Show status
+          docker-compose ps
