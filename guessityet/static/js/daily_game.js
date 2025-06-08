@@ -343,7 +343,8 @@ class GuessItYetGame {
         for (let i = 1; i <= 6; i++) {
             const circle = document.getElementById(`attempt-${i}`);
             if (circle) {
-                circle.classList.remove('current', 'correct', 'wrong', 'franchise', 'skipped', 'clickable', 'disabled', 'selected');
+                // Limpiar todas las clases de estado
+                circle.classList.remove('current', 'correct', 'wrong', 'franchise', 'skipped', 'clickable', 'disabled', 'viewing');
 
                 if (i > this.maxAttempts) {
                     circle.style.display = 'none';
@@ -360,27 +361,26 @@ class GuessItYetGame {
                         circle.style.cursor = 'not-allowed';
                     }
 
-                    // Marcar el turno actual
+                    // Marcar el turno actual (azul) - solo si no está terminado el juego
                     if (i === this.currentAttempt && !this.gameEnded) {
                         circle.classList.add('current');
                     }
 
-                    // Resaltar la posición actual de visualización
+                    // Marcar la casilla seleccionada actualmente (hacia abajo) usando clase CSS
                     if (i === this.currentViewingAttempt) {
-                        circle.style.fontWeight = '900';
-                        circle.style.textShadow = '0 0 2px rgba(0,0,0,0.5)';
-                        circle.style.transform = 'translateY(4px)';
-                        circle.style.fontSize = '18px';
-                    } else {
-                        circle.style.fontWeight = 'bold';
-                        circle.style.textShadow = 'none';
-                        circle.style.transform = 'translateY(0)';
-                        circle.style.fontSize = '14px';
+                        circle.classList.add('viewing');
                     }
+
+                    // Limpiar estilos inline que podrían causar conflictos
+                    circle.style.fontWeight = '';
+                    circle.style.textShadow = '';
+                    circle.style.transform = '';
+                    circle.style.fontSize = '';
                 }
             }
         }
 
+        // Aplicar resultados de intentos ya realizados
         if (gameState.attempts) {
             gameState.attempts.forEach(attempt => {
                 this.updateAttemptIndicator(attempt.attempt, attempt);
@@ -436,12 +436,18 @@ class GuessItYetGame {
             }
         }
 
+        // Actualizar la imagen que estamos viendo actualmente
         this.currentViewingAttempt = attemptNum;
     }
 
     updateGameInfo() {
-        const infoContent = document.getElementById('info-content');
         const infoOverlay = document.getElementById('game-info-overlay');
+
+        if (!infoOverlay) {
+            console.warn('Element game-info-overlay not found');
+            return;
+        }
+
         const hasGif = gameData.gif_path && gameData.gif_path.trim() !== '';
         const isLastAttempt = this.currentViewingAttempt === this.maxAttempts;
 
@@ -449,7 +455,7 @@ class GuessItYetGame {
 
         if (this.currentViewingAttempt === 1) {
             // Primera imagen: sin información
-            infoOverlay.style.display = 'none';
+            infoOverlay.classList.remove('show');
             return;
         } else if (isLastAttempt && hasGif) {
             // Último intento con GIF: mostrar desarrolladora
@@ -487,11 +493,16 @@ class GuessItYetGame {
             }
         }
 
-        if (infoText && infoContent) {
-            infoContent.innerHTML = infoText;
-            infoOverlay.style.display = 'block';
+        if (infoText) {
+            const infoContent = infoOverlay.querySelector('#info-content');
+            if (infoContent) {
+                infoContent.innerHTML = infoText;
+            } else {
+                infoOverlay.innerHTML = infoText;
+            }
+            infoOverlay.classList.add('show');
         } else {
-            infoOverlay.style.display = 'none';
+            infoOverlay.classList.remove('show');
         }
     }
 
@@ -644,16 +655,8 @@ class GuessItYetGame {
             attemptsContainer.classList.add('game-won');
         }
 
-        for (let i = 1; i <= this.maxAttempts; i++) {
-            const circle = document.getElementById(`attempt-${i}`);
-            if (circle && !circle.classList.contains('franchise')) {
-                circle.classList.remove('current', 'wrong', 'skipped');
-                circle.classList.add('correct');
-                circle.style.backgroundColor = '#28a745';
-                circle.style.borderColor = '#28a745';
-                circle.style.cursor = 'pointer';
-            }
-        }
+        // Actualizar todas las casillas como correctas, pero mantener la navegación
+        this.updateAttemptIndicators();
 
         this.disableGameControls();
         this.showEndGameButtons();
@@ -678,13 +681,8 @@ class GuessItYetGame {
             attemptsContainer.classList.add('game-lost');
         }
 
-        for (let i = 1; i <= this.maxAttempts; i++) {
-            const circle = document.getElementById(`attempt-${i}`);
-            if (circle && !circle.classList.contains('correct') && !circle.classList.contains('franchise')) {
-                circle.classList.remove('current');
-                circle.classList.add('wrong');
-            }
-        }
+        // Actualizar indicadores manteniendo los estados correctos
+        this.updateAttemptIndicators();
 
         this.disableGameControls();
         this.showEndGameButtons();
@@ -794,9 +792,12 @@ function navigateToAttempt(attemptNum) {
     const maxAvailable = game.gameEnded ? game.maxAttempts : game.currentAttempt;
 
     if (attemptNum >= 1 && attemptNum <= maxAvailable) {
+        // Cambiar solo la imagen que estamos viendo
         game.currentViewingAttempt = attemptNum;
         game.showScreenshotForAttempt(attemptNum);
         game.updateGameInfo();
+
+        // Actualizar indicadores manteniendo el turno actual
         game.updateAttemptIndicators();
     }
 }

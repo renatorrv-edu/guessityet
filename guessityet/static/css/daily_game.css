@@ -202,8 +202,23 @@
     position: relative;
 }
 
-.attempt-circle:hover {
+/* Hover solo para casillas que NO están seleccionadas actualmente */
+.attempt-circle:not(.viewing):hover {
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* La casilla que estamos viendo actualmente - más específico que hover */
+.attempt-circle.viewing {
+    font-weight: 900 !important;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5) !important;
+    transform: translateY(4px) !important;
+    font-size: 18px !important;
+}
+
+/* Hover para la casilla que estamos viendo - mantiene su posición */
+.attempt-circle.viewing:hover {
+    transform: translateY(4px) !important;
     box-shadow: var(--shadow-md);
 }
 
@@ -212,6 +227,27 @@
     color: var(--text-on-primary);
     border-color: var(--primary-color);
     transform: scale(1.1);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Hover para el turno actual - mantiene su escala */
+.attempt-circle.current:hover {
+    transform: scale(1.1) translateY(-2px);
+}
+
+/* Si es tanto current como viewing, priorizar viewing */
+.attempt-circle.current.viewing {
+    background: var(--primary-color) !important;
+    color: var(--text-on-primary) !important;
+    border-color: var(--primary-color) !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5) !important;
+    transform: translateY(4px) scale(1.1) !important;
+    font-size: 18px !important;
+}
+
+.attempt-circle.current.viewing:hover {
+    transform: translateY(4px) scale(1.1) !important;
     box-shadow: var(--shadow-lg);
 }
 
@@ -244,13 +280,70 @@
     cursor: not-allowed;
 }
 
-/* Estados de fin de juego */
-.attempts-indicator.game-won .attempt-circle {
-    background: var(--success-color);
-    border-color: var(--success-color);
-    color: white;
+.attempt-circle.disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
+/* Estados de fin de juego - más específicos */
+
+/* VICTORIA: Todas las casillas verdes que armonizan con el tema */
+.attempts-indicator.game-won .attempt-circle {
+    background: #2E7D32 !important;
+    border-color: #2E7D32 !important;
+    color: white !important;
+}
+
+.attempts-indicator.game-won .attempt-circle:hover {
+    background: #388E3C !important;
+    border-color: #388E3C !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+}
+
+.attempts-indicator.game-won .attempt-circle.viewing {
+    background: #2E7D32 !important;
+    border-color: #2E7D32 !important;
+    color: white !important;
+    transform: translateY(4px) !important;
+}
+
+.attempts-indicator.game-won .attempt-circle.viewing:hover {
+    background: #388E3C !important;
+    border-color: #388E3C !important;
+    color: white !important;
+    transform: translateY(4px) !important;
+}
+
+/* DERROTA: Todas las casillas rojas que armonizan con el tema */
+.attempts-indicator.game-lost .attempt-circle {
+    background: #C62828 !important;
+    border-color: #C62828 !important;
+    color: white !important;
+}
+
+.attempts-indicator.game-lost .attempt-circle:hover {
+    background: #D32F2F !important;
+    border-color: #D32F2F !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+}
+
+.attempts-indicator.game-lost .attempt-circle.viewing {
+    background: #C62828 !important;
+    border-color: #C62828 !important;
+    color: white !important;
+    transform: translateY(4px) !important;
+}
+
+.attempts-indicator.game-lost .attempt-circle.viewing:hover {
+    background: #D32F2F !important;
+    border-color: #D32F2F !important;
+    color: white !important;
+    transform: translateY(4px) !important;
+}
+
+/* Animación de shake solo para las casillas que fueron errores */
 .attempts-indicator.game-lost .attempt-circle.wrong {
     animation: shake 0.5s ease-in-out;
 }
