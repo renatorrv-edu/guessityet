@@ -27,8 +27,41 @@ class GuessItYetGame {
         this.startCountdown();
 
         if (this.gameEnded) {
+            // AÑADIR ESTAS LÍNEAS:
+            const attemptsContainer = document.querySelector('.attempts-indicator');
+            if (attemptsContainer) {
+                if (gameState.won) {
+                    attemptsContainer.classList.add('game-won');
+                    console.log('🏆 Aplicando estilo de VICTORIA al recargar');
+                } else if (gameState.lost) {
+                    attemptsContainer.classList.add('game-lost');
+                    console.log('💀 Aplicando estilo de DERROTA al recargar');
+                }
+            }
+
+            this.hideGameControls();
             this.disableGameControls();
         }
+    }
+
+    hideGameControls() {
+        console.log('🎮 Ocultando controles del juego...');
+
+        // Ocultar la barra de búsqueda completa
+        const searchContainer = document.querySelector('.search-container');
+        if (searchContainer) {
+            searchContainer.style.display = 'none';
+            console.log('🔍 Barra de búsqueda ocultada');
+        }
+
+        // Ocultar el botón de envío
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) {
+            submitBtn.style.display = 'none';
+            console.log('📤 Botón enviar ocultado');
+        }
+
+        console.log('✅ Controles del juego ocultados completamente');
     }
 
     setupEventListeners() {
@@ -653,6 +686,7 @@ class GuessItYetGame {
         // Actualizar todas las casillas como correctas, pero mantener la navegación
         this.updateAttemptIndicators();
 
+        this.hideGameControls();
         this.disableGameControls();
         this.showEndGameButtons();
     }
@@ -679,6 +713,7 @@ class GuessItYetGame {
         // Actualizar indicadores manteniendo los estados correctos
         this.updateAttemptIndicators();
 
+        this.hideGameControls();
         this.disableGameControls();
         this.showEndGameButtons();
     }
