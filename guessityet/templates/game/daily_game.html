@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Juego Diario - Guess It Yet?{% endblock %}
+
+{% block meta_description %}Juega al Guess It Yet? diario. Adivina el videojuego con capturas e información gradual.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/daily_game.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="game-container">
+    <!-- Header del juego simplificado -->
+    <div class="game-header fade-in">
+        <h1>
+            <i class="fas fa-gamepad me-2"></i>
+            Juego #{{ today|date:"z"|add:1 }}
+        </h1>
+        <div class="game-number">{{ today|date:"l, j \d\e F \d\e Y" }}</div>
+
+        <!-- Botón de prueba (solo en desarrollo) -->
+        {% if debug %}
+        <div class="mt-3">
+            <button onclick="generateNewTestGame()" class="btn btn-light btn-sm">
+                <i class="fas fa-refresh me-1"></i>Nuevo Juego IGDB
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Contenedor de la imagen principal -->
+    <div class="screenshot-container fade-in">
+        {% if screenshots %}
+            <img id="current-screenshot"
+                 src="{% if screenshots.0.local_path %}/media/{{ screenshots.0.local_path }}{% else %}{{ screenshots.0.image_url }}{% endif %}"
+                 alt="Screenshot del juego"
+                 class="screenshot-main">
+
+            <!-- Información superpuesta -->
+            <div class="game-info-overlay" id="game-info-overlay">
+                <div id="info-content">
+                    <!-- La información se mostrará según la imagen -->
+                </div>
+            </div>
+
+            <!-- Indicador de tipo de contenido -->
+            <div class="video-type-indicator" id="content-type-indicator" style="display: none;">
+                <i class="fas fa-film"></i>
+                <span>Vídeo</span>
+            </div>
+
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No hay capturas disponibles para este juego.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Indicador de intentos clicables -->
+    <div class="attempts-indicator fade-in">
+        {% for i in "123456" %}
+            <div class="attempt-circle" id="attempt-{{ i }}" data-attempt="{{ i }}" onclick="navigateToAttempt({{ i }})">
+                {{ i }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Mensaje de intentos restantes / resultado del juego -->
+    <div class="remaining-attempts fade-in" id="remaining-attempts">
+        {% if game_state.won %}
+            {% if game_state.guessed_it %}
+                <div class="alert alert-success text-center mb-0">
+                    <h4><i class="fas fa-star me-2"></i>¡GUESSED IT!</h4>
+                    <p class="mb-0">¡Acertaste en el primer intento!</p>
+                </div>
+            {% else %}
+                <div class="alert alert-success text-center mb-0">
+                    <h4><i class="fas fa-trophy me-2"></i>¡Ganaste!</h4>
+                    <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
+                </div>
+            {% endif %}
+        {% elif game_state.lost %}
+            <div class="alert alert-danger text-center mb-0">
+                <h4><i class="fas fa-skull me-2"></i>¡Perdiste!</h4>
+                <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
+            </div>
+        {% else %}
+            <span>¡Te quedan 6 intentos!</span>
+        {% endif %}
+    </div>
+
+    <!-- Área de juego principal -->
+    <div id="game-area" class="fade-in">
+        {% if not game_state.won and not game_state.lost %}
+
+            <!-- Barra de búsqueda -->
+            <div class="search-container">
+                <div class="input-group">
+                    <input type="text"
+                           class="form-control search-input"
+                           id="game-search"
+                           placeholder="Escribe el nombre del juego..."
+                           autocomplete="off">
+                    <button class="btn btn-skip"
+                            type="button"
+                            id="skip-btn">
+                        <i class="fas fa-forward me-1"></i>Saltar
+                    </button>
+                </div>
+
+                <!-- Sugerencias de búsqueda -->
+                <div class="search-suggestions" id="search-suggestions">
+                    <!-- Se llenarán dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Botón de envío -->
+            <div class="text-center mb-4">
+                <button class="btn btn-primary btn-submit"
+                        id="submit-btn"
+                        disabled>
+                    <i class="fas fa-paper-plane me-2"></i>Enviar Respuesta
+                </button>
+            </div>
+
+        {% endif %}
+
+        <!-- Mensaje de victoria/derrota -->
+        {% if game_state.won %}
+            <div class="alert alert-success text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <i class="fas fa-trophy me-2 text-warning" style="font-size: 1.5rem;"></i>
+                    <strong>¡Correcto!</strong>
+                </div>
+                <p class="mb-1">La respuesta era: <strong>{{ game.title }}</strong></p>
+                {% if game.franchise_name %}
+                    <p class="mb-0 small">
+                        <i class="fas fa-crown me-1"></i>
+                        Franquicia: <strong>{{ game.franchise_name }}</strong>
+                    </p>
+                {% endif %}
+            </div>
+        {% elif game_state.lost %}
+            <div class="alert alert-danger text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <i class="fas fa-times-circle me-2" style="font-size: 1.5rem;"></i>
+                    <strong>¡Más suerte la próxima vez!</strong>
+                </div>
+                <p class="mb-1">La respuesta era: <strong>{{ game.title }}</strong></p>
+                {% if game.franchise_name %}
+                    <p class="mb-0 small">
+                        <i class="fas fa-crown me-1"></i>
+                        Franquicia: <strong>{{ game.franchise_name }}</strong>
+                    </p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Historial de intentos -->
+    <div class="attempts-history" id="attempts-history" style="display: none;">
+        <h5>
+            <i class="fas fa-list me-2"></i>
+            Historial de Intentos
+        </h5>
+        <div id="attempts-history-content">
+            <!-- Se llenará dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Botones finales -->
+    {% if game_state.won or game_state.lost %}
+    <div class="game-ended slide-up">
+        <h6 class="mb-3">
+            <i class="fas fa-calendar-alt me-2"></i>
+            ¿Qué más puedes hacer?
+        </h6>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{% url 'guessityet:game_history' %}" class="btn btn-outline-primary">
+                <i class="fas fa-history me-2"></i>Ver Historial
+            </a>
+            <a href="{% url 'guessityet:how_to_play' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-question-circle me-2"></i>Cómo Jugar
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Timer countdown -->
+    <div class="countdown-timer slide-up">
+        <i class="fas fa-clock me-2"></i>
+        <span id="countdown-display">Calculando...</span>
+    </div>
+
+</div>
+
+<!-- Variables globales del juego -->
+<script>
+    // Datos del juego pasados desde Django
+    const gameState = {{ game_state_json|safe }};
+    const gameData = {
+        id: {{ game.id }},
+        title: "{{ game.title|escapejs }}",
+        developer: "{{ game.developer|default:''|escapejs }}",
+        release_year: {{ game.release_year|default:'null' }},
+        genres: "{{ game.genres|default:''|escapejs }}",
+        platforms: "{{ game.platforms|default:''|escapejs }}",
+        metacritic: {{ game.metacritic|default:'null' }},
+        franchise_name: "{{ game.franchise_name|default:''|escapejs }}",
+        franchise_slug: "{{ game.franchise_slug|default:''|escapejs }}",
+        gif_path: "{{ game.gif_path|default:''|escapejs }}",
+        video_url: "{{ game.video_url|default:''|escapejs }}",
+        igdb_id: {{ game.igdb_id|default:'null' }},
+        rawg_id: {{ game.rawg_id|default:'null' }}
+    };
+    const screenshots = [
+        {% for screenshot in screenshots %}
+        {
+            difficulty: {{ screenshot.difficulty }},
+            url: "{% if screenshot.local_path %}/media/{{ screenshot.local_path }}{% else %}{{ screenshot.image_url }}{% endif %}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    // Debug info
+    console.log('Game Data:', gameData);
+    console.log('Game State:', gameState);
+    console.log('Screenshots:', screenshots);
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/daily_game.js' %}"></script>
+
+{% if debug %}
+<script>
+// Función para generar nuevo juego de prueba con IGDB
+async function generateNewTestGame() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generando...';
+    button.disabled = true;
+
+    try {
+        const response = await fetch('/guessityet/nuevo-juego-igdb/', {
+            method: 'GET'
+        });
+
+        if (response.ok) {
+            // Mostrar mensaje de éxito
+            showSuccessMessage('Nuevo juego generado correctamente');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showErrorMessage('Error al generar nuevo juego');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showErrorMessage('Error de conexión');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+}
+
+// Funciones adicionales de debug
+function debugGameState() {
+    console.log('=== DEBUG GAME STATE ===');
+    console.log('Current attempt:', gameState.current_attempt);
+    console.log('Won:', gameState.won);
+    console.log('Lost:', gameState.lost);
+    console.log('Attempts:', gameState.attempts);
+    console.log('========================');
+}
+
+function debugScreenshots() {
+    console.log('=== DEBUG SCREENSHOTS ===');
+    screenshots.forEach((shot, index) => {
+        console.log(`Screenshot ${index + 1}:`, shot);
+    });
+    console.log('=========================');
+}
+
+// Hacer funciones disponibles globalmente en debug
+window.debugGameState = debugGameState;
+window.debugScreenshots = debugScreenshots;
+</script>
+{% endif %}
+
+<script>
+// Funciones globales adicionales
+function showOtherDays() {
+    // Implementar navegación a historial de juegos
+    window.location.href = "{% url 'guessityet:game_history' %}";
+}
+
+function shareResult() {
+    if (navigator.share && (gameState.won || gameState.lost)) {
+        const resultText = gameState.won
+            ? `¡Adiviné el juego en ${gameState.current_attempt - 1} intentos!`
+            : '¡No pude adivinar el juego de hoy!';
+
+        navigator.share({
+            title: 'Guess It Yet? - Resultado',
+            text: `${resultText} ¿Puedes hacerlo mejor?`,
+            url: window.location.origin
+        }).catch(console.error);
+    } else {
+        // Fallback: copiar al portapapeles
+        const resultText = gameState.won
+            ? `¡Adiviné el juego en ${gameState.current_attempt - 1} intentos!`
+            : '¡No pude adivinar el juego de hoy!';
+
+        const shareText = `${resultText} Juega en ${window.location.origin}`;
+
+        navigator.clipboard.writeText(shareText).then(() => {
+            showSuccessMessage('Resultado copiado al portapapeles');
+        }).catch(() => {
+            showInfoMessage('Resultado: ' + shareText);
+        });
+    }
+}
+
+// Event listeners adicionales
+document.addEventListener('DOMContentLoaded', function() {
+    // Añadir keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Escape para cerrar sugerencias
+        if (e.key === 'Escape') {
+            const suggestions = document.getElementById('search-suggestions');
+            if (suggestions && suggestions.style.display !== 'none') {
+                suggestions.style.display = 'none';
+            }
+        }
+
+        // Números 1-6 para navegar entre intentos
+        if (e.key >= '1' && e.key <= '6') {
+            const attemptNum = parseInt(e.key);
+            if (window.guessItYetGame) {
+                navigateToAttempt(attemptNum);
+            }
+        }
+
+        // Enter en el input de búsqueda
+        if (e.key === 'Enter' && e.target.id === 'game-search') {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn && !submitBtn.disabled) {
+                submitBtn.click();
+            }
+        }
+    });
+
+    // Añadir efectos de hover mejorados
+    const attemptCircles = document.querySelectorAll('.attempt-circle');
+    attemptCircles.forEach(circle => {
+        circle.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('disabled')) {
+                this.style.transform = 'translateY(-2px) scale(1.05)';
+            }
+        });
+
+        circle.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('current')) {
+                this.style.transform = '';
+            }
+        });
+    });
+
+    // Añadir animación al cargar
+    const elements = document.querySelectorAll('.fade-in');
+    elements.forEach((el, index) => {
+        el.style.animationDelay = `${index * 0.1}s`;
+    });
+});
+
+// Función para navegar a un intento específico (mantener compatibilidad)
+function navigateToAttempt(attemptNum) {
+    if (window.guessItYetGame) {
+        const game = window.guessItYetGame;
+        const maxAvailable = game.gameEnded ? game.maxAttempts : game.currentAttempt;
+
+        if (attemptNum >= 1 && attemptNum <= maxAvailable) {
+            game.currentViewingAttempt = attemptNum;
+            game.showScreenshotForAttempt(attemptNum);
+            game.updateGameInfo();
+            game.updateAttemptIndicators();
+        }
+    }
+}
+
+// Detectar si es dispositivo móvil para ajustes específicos
+const isMobile = window.innerWidth <= 768;
+if (isMobile) {
+    // Ajustes específicos para móvil
+    document.addEventListener('DOMContentLoaded', function() {
+        // Reducir animaciones en móvil para mejor rendimiento
+        const style = document.createElement('style');
+        style.textContent = `
+            @media (max-width: 768px) {
+                * {
+                    animation-duration: 0.2s !important;
+                    transition-duration: 0.2s !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    });
+}
+</script>
+{% endblock %}

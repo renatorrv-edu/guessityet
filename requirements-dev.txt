@@ -1,0 +1,20 @@
+# Herramientas de desarrollo y calidad de código
+black==24.10.0
+flake8==7.1.1
+isort==5.13.2
+
+# Extensiones útiles de flake8
+flake8-docstrings==1.7.0
+flake8-import-order==0.18.2
+flake8-bugbear==24.8.19
+
+# Testing
+pytest==8.3.3
+pytest-django==4.9.0
+pytest-cov==6.0.0
+
+# Debugging y profiling
+django-debug-toolbar==4.4.6
+
+# Pre-commit hooks (opcional)
+pre-commit==4.0.1

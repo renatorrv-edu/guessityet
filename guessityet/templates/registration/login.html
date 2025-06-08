@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Iniciar Sesión - Guess It Yet?{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <div class="auth-icon">
+                <i class="fas fa-sign-in-alt"></i>
+            </div>
+            <h4>Iniciar Sesión</h4>
+            <p>Accede a tu cuenta para continuar jugando</p>
+        </div>
+
+        <div class="auth-card-body">
+            <form method="post" data-validate id="login-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="auth-alert auth-alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        {{ form.non_field_errors.0 }}
+                    </div>
+                {% endif %}
+
+                <div class="auth-form-group">
+                    <label for="{{ form.username.id_for_label }}" class="auth-form-label">
+                        <i class="fas fa-user me-2"></i>Usuario
+                    </label>
+                    <input type="text"
+                           name="{{ form.username.name }}"
+                           id="{{ form.username.id_for_label }}"
+                           class="auth-form-control{% if form.username.errors %} is-invalid{% endif %}"
+                           placeholder="Ingresa tu nombre de usuario"
+                           value="{{ form.username.value|default:'' }}"
+                           autocomplete="username"
+                           required>
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            {{ form.username.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="auth-form-group">
+                    <label for="{{ form.password.id_for_label }}" class="auth-form-label">
+                        <i class="fas fa-lock me-2"></i>Contraseña
+                    </label>
+                    <div class="auth-input-group">
+                        <input type="password"
+                               name="{{ form.password.name }}"
+                               id="{{ form.password.id_for_label }}"
+                               class="auth-form-control{% if form.password.errors %} is-invalid{% endif %}"
+                               placeholder="Ingresa tu contraseña"
+                               autocomplete="current-password"
+                               required>
+                        <button type="button"
+                                class="password-toggle"
+                                data-target="{{ form.password.id_for_label }}"
+                                aria-label="Mostrar contraseña">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="invalid-feedback">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            {{ form.password.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="auth-check">
+                    <input type="checkbox" id="remember-me" name="remember_me">
+                    <label for="remember-me">Recordarme en este dispositivo</label>
+                </div>
+
+                <button type="submit" class="auth-btn auth-btn-primary">
+                    <span class="spinner loading-spinner"></span>
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>o</span>
+            </div>
+
+            <div class="auth-links">
+                <p>
+                    <a href="{% url 'password_reset' %}">
+                        <i class="fas fa-key me-1"></i>
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </p>
+                <p>
+                    ¿No tienes cuenta?
+                    <a href="{% url 'guessityet:register' %}">
+                        <i class="fas fa-user-plus me-1"></i>
+                        Regístrate aquí
+                    </a>
+                </p>
+                <p>
+                    <a href="{% url 'guessityet:daily_game' %}" class="text-secondary">
+                        <i class="fas fa-gamepad me-1"></i>
+                        Continuar sin cuenta
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/auth.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle de contraseña
+    const passwordToggles = document.querySelectorAll('.password-toggle');
+    passwordToggles.forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const passwordField = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+                this.setAttribute('aria-label', 'Ocultar contraseña');
+            } else {
+                passwordField.type = 'password';
+                icon.className = 'fas fa-eye';
+                this.setAttribute('aria-label', 'Mostrar contraseña');
+            }
+        });
+    });
+
+    // Estado de carga del formulario
+    const loginForm = document.getElementById('login-form');
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+
+    loginForm.addEventListener('submit', function() {
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+
+        setTimeout(() => {
+            submitBtn.classList.remove('loading');
+            submitBtn.disabled = false;
+        }, 3000);
+    });
+
+    // Validación en tiempo real
+    const inputs = loginForm.querySelectorAll('.auth-form-control');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.value.trim()) {
+                this.classList.remove('is-invalid');
+                const feedback = this.parentNode.querySelector('.invalid-feedback');
+                if (feedback) {
+                    feedback.style.display = 'none';
+                }
+            }
+        });
+
+        input.addEventListener('blur', function() {
+            if (this.value.trim()) {
+                this.classList.add('valid');
+            } else {
+                this.classList.remove('valid');
+            }
+        });
+    });
+
+    // Auto-focus en el primer campo
+    const firstInput = loginForm.querySelector('input');
+    if (firstInput) {
+        firstInput.focus();
+    }
+});
+</script>
+{% endblock %}

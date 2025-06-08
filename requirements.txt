@@ -1,0 +1,33 @@
+# Django y framework
+Django~=4.2.21
+djangorestframework~=3.15.2
+
+# Servidor web ASGI/WSGI
+gunicorn~=23.0.0
+uvicorn[standard]~=0.34.3
+
+# Base de datos
+psycopg2-binary~=2.9.10
+
+# Tareas asíncronas
+celery~=5.5.2
+redis==4.5.5
+django-celery-beat==2.5.0
+
+# APIs externas
+requests~=2.32.3
+yt-dlp~=2025.5.22
+
+# Procesamiento de imágenes y video
+Pillow~=9.5.0
+moviepy~=1.0.3
+numpy~=2.2.6
+
+# Documentación API
+drf-spectacular~=0.28.0
+
+# Configuración
+python-dotenv~=1.1.0
+
+# Archivos estáticos (para producción sin Nginx)
+whitenoise~=6.8.2
