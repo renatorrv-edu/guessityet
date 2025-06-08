@@ -11,192 +11,222 @@
 
 {% block content %}
 <div class="game-container">
-    <!-- Header del juego simplificado -->
-    <div class="game-header fade-in">
-        <h1>
-            <i class="fas fa-gamepad me-2"></i>
-            Juego #{{ today|date:"z"|add:1 }}
-        </h1>
-        <div class="game-number">{{ today|date:"l, j \d\e F \d\e Y" }}</div>
+    {% if no_game %}
+        <!-- Mensaje cuando no hay juego disponible -->
+        <div class="no-game-container text-center fade-in">
+            <div class="card mx-auto" style="max-width: 500px;">
+                <div class="card-body p-4">
+                    <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                    <h2 class="card-title">Próximamente</h2>
+                    <p class="card-text text-muted mb-4">
+                        El juego diario aún no está disponible. Los juegos se publican automáticamente a las 00:00.
+                    </p>
 
-        <!-- Botón de prueba (solo en desarrollo) -->
-        {% if debug %}
-        <div class="mt-3">
-            <button onclick="generateNewTestGame()" class="btn btn-light btn-sm">
-                <i class="fas fa-refresh me-1"></i>Nuevo Juego IGDB
-            </button>
+                    <!-- Timer countdown hasta las 00:00 -->
+                    <div class="countdown-timer mb-3">
+                        <i class="fas fa-hourglass-half me-2"></i>
+                        <span id="countdown-display">Calculando...</span>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <a href="{% url 'guessityet:game_history' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-history me-2"></i>Ver Historial
+                        </a>
+                        <a href="{% url 'guessityet:how_to_play' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-question-circle me-2"></i>Cómo Jugar
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endif %}
-    </div>
+    {% else %}
+        <!-- Header del juego simplificado -->
+        <div class="game-header fade-in">
+            <h1>
+                <i class="fas fa-gamepad me-2"></i>
+                Juego #{{ today|date:"z"|add:1 }}
+            </h1>
+            <div class="game-number">{{ today|date:"l, j \d\e F \d\e Y" }}</div>
 
-    <!-- Contenedor de la imagen principal -->
-    <div class="screenshot-container fade-in">
-        {% if screenshots %}
-            <img id="current-screenshot"
-                 src="{% if screenshots.0.local_path %}/media/{{ screenshots.0.local_path }}{% else %}{{ screenshots.0.image_url }}{% endif %}"
-                 alt="Screenshot del juego"
-                 class="screenshot-main">
+            <!-- Botón de prueba (solo en desarrollo) -->
+            {% if debug %}
+            <div class="mt-3">
+                <button onclick="generateNewTestGame()" class="btn btn-light btn-sm">
+                    <i class="fas fa-refresh me-1"></i>Nuevo Juego IGDB
+                </button>
+            </div>
+            {% endif %}
+        </div>
 
-            <!-- Información superpuesta -->
-            <div class="game-info-overlay" id="game-info-overlay">
-                <div id="info-content">
-                    <!-- La información se mostrará según la imagen -->
+        <!-- Contenedor de la imagen principal -->
+        <div class="screenshot-container fade-in">
+            {% if screenshots %}
+                <img id="current-screenshot"
+                     src="{% if screenshots.0.local_path %}/media/{{ screenshots.0.local_path }}{% else %}{{ screenshots.0.image_url }}{% endif %}"
+                     alt="Screenshot del juego"
+                     class="screenshot-main">
+
+                <!-- Información superpuesta -->
+                <div class="game-info-overlay" id="game-info-overlay">
+                    <div id="info-content">
+                        <!-- La información se mostrará según la imagen -->
+                    </div>
                 </div>
-            </div>
 
-            <!-- Indicador de tipo de contenido -->
-            <div class="video-type-indicator" id="content-type-indicator" style="display: none;">
-                <i class="fas fa-film"></i>
-                <span>Vídeo</span>
-            </div>
-
-        {% else %}
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                No hay capturas disponibles para este juego.
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Indicador de intentos clicables -->
-    <div class="attempts-indicator fade-in">
-        {% for i in "123456" %}
-            <div class="attempt-circle" id="attempt-{{ i }}" data-attempt="{{ i }}" onclick="navigateToAttempt({{ i }})">
-                {{ i }}
-            </div>
-        {% endfor %}
-    </div>
-
-    <!-- Mensaje de intentos restantes / resultado del juego -->
-    <div class="remaining-attempts fade-in" id="remaining-attempts">
-        {% if game_state.won %}
-            {% if game_state.guessed_it %}
-                <div class="alert alert-success text-center mb-0">
-                    <h4><i class="fas fa-star me-2"></i>¡GUESSED IT!</h4>
-                    <p class="mb-0">¡Acertaste en el primer intento!</p>
+                <!-- Indicador de tipo de contenido -->
+                <div class="video-type-indicator" id="content-type-indicator" style="display: none;">
+                    <i class="fas fa-film"></i>
+                    <span>Vídeo</span>
                 </div>
+
             {% else %}
-                <div class="alert alert-success text-center mb-0">
-                    <h4><i class="fas fa-trophy me-2"></i>¡Ganaste!</h4>
-                    <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No hay capturas disponibles para este juego.
                 </div>
             {% endif %}
-        {% elif game_state.lost %}
-            <div class="alert alert-danger text-center mb-0">
-                <h4><i class="fas fa-skull me-2"></i>¡Perdiste!</h4>
-                <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
-            </div>
-        {% else %}
-            <span>¡Te quedan 6 intentos!</span>
-        {% endif %}
-    </div>
+        </div>
 
-    <!-- Área de juego principal -->
-    <div id="game-area" class="fade-in">
-        {% if not game_state.won and not game_state.lost %}
+        <!-- Indicador de intentos clicables -->
+        <div class="attempts-indicator fade-in">
+            {% for i in "123456" %}
+                <div class="attempt-circle" id="attempt-{{ i }}" data-attempt="{{ i }}" onclick="navigateToAttempt({{ i }})">
+                    {{ i }}
+                </div>
+            {% endfor %}
+        </div>
 
-            <!-- Barra de búsqueda -->
-            <div class="search-container">
-                <div class="input-group">
-                    <input type="text"
-                           class="form-control search-input"
-                           id="game-search"
-                           placeholder="Escribe el nombre del juego..."
-                           autocomplete="off">
-                    <button class="btn btn-skip"
-                            type="button"
-                            id="skip-btn">
-                        <i class="fas fa-forward me-1"></i>Saltar
+        <!-- Mensaje de intentos restantes / resultado del juego -->
+        <div class="remaining-attempts fade-in" id="remaining-attempts">
+            {% if game_state.won %}
+                {% if game_state.guessed_it %}
+                    <div class="alert alert-success text-center mb-0">
+                        <h4><i class="fas fa-star me-2"></i>¡GUESSED IT!</h4>
+                        <p class="mb-0">¡Acertaste en el primer intento!</p>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success text-center mb-0">
+                        <h4><i class="fas fa-trophy me-2"></i>¡Ganaste!</h4>
+                        <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
+                    </div>
+                {% endif %}
+            {% elif game_state.lost %}
+                <div class="alert alert-danger text-center mb-0">
+                    <h4><i class="fas fa-skull me-2"></i>¡Perdiste!</h4>
+                    <p class="mb-0">La respuesta correcta era: <strong>{{ game.title }}</strong></p>
+                </div>
+            {% else %}
+                <span>¡Te quedan 6 intentos!</span>
+            {% endif %}
+        </div>
+
+        <!-- Área de juego principal -->
+        <div id="game-area" class="fade-in">
+            {% if not game_state.won and not game_state.lost %}
+
+                <!-- Barra de búsqueda -->
+                <div class="search-container">
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control search-input"
+                               id="game-search"
+                               placeholder="Escribe el nombre del juego..."
+                               autocomplete="off">
+                        <button class="btn btn-skip"
+                                type="button"
+                                id="skip-btn">
+                            <i class="fas fa-forward me-1"></i>Saltar
+                        </button>
+                    </div>
+
+                    <!-- Sugerencias de búsqueda -->
+                    <div class="search-suggestions" id="search-suggestions">
+                        <!-- Se llenarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Botón de envío -->
+                <div class="text-center mb-4">
+                    <button class="btn btn-primary btn-submit"
+                            id="submit-btn"
+                            disabled>
+                        <i class="fas fa-paper-plane me-2"></i>Enviar Respuesta
                     </button>
                 </div>
 
-                <!-- Sugerencias de búsqueda -->
-                <div class="search-suggestions" id="search-suggestions">
-                    <!-- Se llenarán dinámicamente -->
+            {% endif %}
+
+            <!-- Mensaje de victoria/derrota -->
+            {% if game_state.won %}
+                <div class="alert alert-success text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-trophy me-2 text-warning" style="font-size: 1.5rem;"></i>
+                        <strong>¡Correcto!</strong>
+                    </div>
+                    <p class="mb-1">La respuesta era: <strong>{{ game.title }}</strong></p>
+                    {% if game.franchise_name %}
+                        <p class="mb-0 small">
+                            <i class="fas fa-crown me-1"></i>
+                            Franquicia: <strong>{{ game.franchise_name }}</strong>
+                        </p>
+                    {% endif %}
                 </div>
-            </div>
+            {% elif game_state.lost %}
+                <div class="alert alert-danger text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="fas fa-times-circle me-2" style="font-size: 1.5rem;"></i>
+                        <strong>¡Más suerte la próxima vez!</strong>
+                    </div>
+                    <p class="mb-1">La respuesta era: <strong>{{ game.title }}</strong></p>
+                    {% if game.franchise_name %}
+                        <p class="mb-0 small">
+                            <i class="fas fa-crown me-1"></i>
+                            Franquicia: <strong>{{ game.franchise_name }}</strong>
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
 
-            <!-- Botón de envío -->
-            <div class="text-center mb-4">
-                <button class="btn btn-primary btn-submit"
-                        id="submit-btn"
-                        disabled>
-                    <i class="fas fa-paper-plane me-2"></i>Enviar Respuesta
-                </button>
+        <!-- Historial de intentos -->
+        <div class="attempts-history" id="attempts-history" style="display: none;">
+            <h5>
+                <i class="fas fa-list me-2"></i>
+                Historial de Intentos
+            </h5>
+            <div id="attempts-history-content">
+                <!-- Se llenará dinámicamente -->
             </div>
+        </div>
 
+        <!-- Botones finales -->
+        {% if game_state.won or game_state.lost %}
+        <div class="game-ended slide-up">
+            <h6 class="mb-3">
+                <i class="fas fa-calendar-alt me-2"></i>
+                ¿Qué más puedes hacer?
+            </h6>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{% url 'guessityet:game_history' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-history me-2"></i>Ver Historial
+                </a>
+                <a href="{% url 'guessityet:how_to_play' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-question-circle me-2"></i>Cómo Jugar
+                </a>
+            </div>
+        </div>
         {% endif %}
 
-        <!-- Mensaje de victoria/derrota -->
-        {% if game_state.won %}
-            <div class="alert alert-success text-center">
-                <div class="d-flex align-items-center justify-content-center mb-2">
-                    <i class="fas fa-trophy me-2 text-warning" style="font-size: 1.5rem;"></i>
-                    <strong>¡Correcto!</strong>
-                </div>
-                <p class="mb-1">La respuesta era: <strong>{{ game.title }}</strong></p>
-                {% if game.franchise_name %}
-                    <p class="mb-0 small">
-                        <i class="fas fa-crown me-1"></i>
-                        Franquicia: <strong>{{ game.franchise_name }}</strong>
-                    </p>
-                {% endif %}
-            </div>
-        {% elif game_state.lost %}
-            <div class="alert alert-danger text-center">
-                <div class="d-flex align-items-center justify-content-center mb-2">
-                    <i class="fas fa-times-circle me-2" style="font-size: 1.5rem;"></i>
-                    <strong>¡Más suerte la próxima vez!</strong>
-                </div>
-                <p class="mb-1">La respuesta era: <strong>{{ game.title }}</strong></p>
-                {% if game.franchise_name %}
-                    <p class="mb-0 small">
-                        <i class="fas fa-crown me-1"></i>
-                        Franquicia: <strong>{{ game.franchise_name }}</strong>
-                    </p>
-                {% endif %}
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- Historial de intentos -->
-    <div class="attempts-history" id="attempts-history" style="display: none;">
-        <h5>
-            <i class="fas fa-list me-2"></i>
-            Historial de Intentos
-        </h5>
-        <div id="attempts-history-content">
-            <!-- Se llenará dinámicamente -->
+        <!-- Timer countdown -->
+        <div class="countdown-timer slide-up">
+            <i class="fas fa-clock me-2"></i>
+            <span id="countdown-display">Calculando...</span>
         </div>
-    </div>
-
-    <!-- Botones finales -->
-    {% if game_state.won or game_state.lost %}
-    <div class="game-ended slide-up">
-        <h6 class="mb-3">
-            <i class="fas fa-calendar-alt me-2"></i>
-            ¿Qué más puedes hacer?
-        </h6>
-        <div class="d-flex justify-content-center gap-3 flex-wrap">
-            <a href="{% url 'guessityet:game_history' %}" class="btn btn-outline-primary">
-                <i class="fas fa-history me-2"></i>Ver Historial
-            </a>
-            <a href="{% url 'guessityet:how_to_play' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-question-circle me-2"></i>Cómo Jugar
-            </a>
-        </div>
-    </div>
     {% endif %}
-
-    <!-- Timer countdown -->
-    <div class="countdown-timer slide-up">
-        <i class="fas fa-clock me-2"></i>
-        <span id="countdown-display">Calculando...</span>
-    </div>
-
 </div>
 
-<!-- Variables globales del juego -->
+<!-- Variables globales del juego (solo si hay juego disponible) -->
+{% if not no_game %}
 <script>
     // Datos del juego pasados desde Django
     const gameState = {{ game_state_json|safe }};
@@ -229,9 +259,52 @@
     console.log('Game State:', gameState);
     console.log('Screenshots:', screenshots);
 </script>
+{% endif %}
+
+<!-- Script para countdown (siempre presente) -->
+<script>
+// Función para countdown hasta las 00:00
+function startCountdown() {
+    const countdownDisplay = document.getElementById('countdown-display');
+    if (!countdownDisplay) return;
+
+    const updateCountdown = () => {
+        const now = new Date();
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
+        const timeLeft = tomorrow.getTime() - now.getTime();
+
+        if (timeLeft <= 0) {
+            countdownDisplay.textContent = 'Nuevo juego disponible - Recarga la página';
+            // Auto-reload la página cuando el tiempo llegue a 0
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+            return;
+        }
+
+        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+        countdownDisplay.textContent = `Nuevo juego en: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+}
+
+// Inicializar countdown cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    startCountdown();
+});
+</script>
 {% endblock %}
 
 {% block extra_js %}
+{% if not no_game %}
 <script src="{% static 'js/daily_game.js' %}"></script>
 
 {% if debug %}
@@ -413,4 +486,5 @@ if (isMobile) {
     });
 }
 </script>
+{% endif %}
 {% endblock %}

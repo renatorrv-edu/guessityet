@@ -25,11 +25,6 @@ from .services.igdb_service import IGDBService
 from .forms import CustomUserCreationForm
 
 
-# ============================================================================
-# VISTAS PRINCIPALES DEL JUEGO
-# ============================================================================
-
-
 class DailyGameView(TemplateView):
     """Vista principal del juego diario"""
 
@@ -42,13 +37,19 @@ class DailyGameView(TemplateView):
         try:
             daily_game = DailyGame.objects.get(date=today)
             game = daily_game.game
+            print(f"Juego diario encontrado para {today}: {game.title}")
         except DailyGame.DoesNotExist:
-            game = self.generate_test_game_data()
-            if not game:
-                # Redirigir a página de error en lugar de renderizar
-                context["no_game"] = True
-                self.template_name = "game/no_game_available.html"
-                return context
+            # Si no hay juego para hoy, mostrar mensaje informativo
+            print(f"No hay juego diario disponible para {today}")
+            context.update(
+                {
+                    "no_game": True,
+                    "today": today,
+                    "message": "El juego diario aún no está disponible. Los juegos se publican automáticamente a las 00:00.",
+                    "next_game_time": "00:00",
+                }
+            )
+            return context
 
         # Inicializar sesión de juego si es necesario
         if (
@@ -83,24 +84,6 @@ class DailyGameView(TemplateView):
             "guessed_it": False,
         }
         self.request.session.modified = True
-
-    def generate_test_game_data(self, use_igdb=True):
-        """Generar un juego completamente nuevo para pruebas"""
-        print(f"Generando nuevo juego con {'IGDB' if use_igdb else 'RAWG'}...")
-
-        if use_igdb:
-            service = IGDBService()
-        else:
-            service = RAWGService()
-
-        new_game = service.select_random_game()
-
-        if new_game:
-            print(f"Nuevo juego generado: {new_game.title}")
-        else:
-            print("No se pudo generar un juego")
-
-        return new_game
 
 
 class GameHistoryView(ListView):
