@@ -1,0 +1,57 @@
+# Git
+.git
+.gitignore
+README.md
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.pytest_cache
+htmlcov
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+
+# Node.js (si tuvieras frontend)
+node_modules
+npm-debug.log*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Archivos de entorno
+.env
+.env.local
+.env.production
+
+# Archivos temporales
+*.tmp
+*.temp
