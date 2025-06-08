@@ -11,26 +11,13 @@
 
 {% block content %}
 <div class="game-container">
-    <!-- Header del juego -->
+    <!-- Header del juego simplificado -->
     <div class="game-header fade-in">
-        <div class="igdb-badge">
-            <i class="fas fa-database"></i>
-            <span>IGDB</span>
-        </div>
-
         <h1>
             <i class="fas fa-gamepad me-2"></i>
             Juego #{{ today|date:"z"|add:1 }}
         </h1>
         <div class="game-number">{{ today|date:"l, j \d\e F \d\e Y" }}</div>
-
-        <!-- Información de franquicia si está disponible -->
-        {% if game.franchise_name %}
-            <div class="franchise-info">
-                <i class="fas fa-crown me-2"></i>
-                <strong>Franquicia:</strong> {{ game.franchise_name }}
-            </div>
-        {% endif %}
 
         <!-- Botón de prueba (solo en desarrollo) -->
         {% if debug %}

@@ -167,9 +167,6 @@ class GuessItYetGame {
                     <div class="fw-bold">${game.name}</div>
                     ${additionalInfoHtml}
                 </div>
-                <div class="service-indicator">
-                    <i class="fas fa-database text-success" title="IGDB"></i>
-                </div>
             `;
 
             suggestionItem.addEventListener('click', () => {
@@ -361,12 +358,12 @@ class GuessItYetGame {
                         circle.style.cursor = 'not-allowed';
                     }
 
-                    // Marcar el turno actual (azul) - solo si no está terminado el juego
+                    // Marcar el turno actual solo si no está terminado el juego
                     if (i === this.currentAttempt && !this.gameEnded) {
                         circle.classList.add('current');
                     }
 
-                    // Marcar la casilla seleccionada actualmente (hacia abajo) usando clase CSS
+                    // Marcar la casilla seleccionada actualmente
                     if (i === this.currentViewingAttempt) {
                         circle.classList.add('viewing');
                     }
@@ -543,7 +540,6 @@ class GuessItYetGame {
             <div class="result-icon">${icon}</div>
             <div class="flex-grow-1">
                 <strong>Intento ${attempt.attempt}:</strong> ${attempt.game_name}
-                <span class="badge bg-success ms-2" title="IGDB"><i class="fas fa-database"></i></span>
                 ${extraText}
             </div>
         `;
@@ -597,7 +593,6 @@ class GuessItYetGame {
                 <div class="result-icon">${icon}</div>
                 <div class="flex-grow-1">
                     <strong>Intento ${attempt.attempt}:</strong> ${attempt.game_name}
-                    <span class="badge bg-success ms-2" title="IGDB"><i class="fas fa-database"></i></span>
                     ${extraText}
                 </div>
             `;
