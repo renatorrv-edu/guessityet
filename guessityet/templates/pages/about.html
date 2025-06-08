@@ -3,16 +3,269 @@
 
 {% block title %}Acerca de - GuessItYet{% endblock %}
 
-{% block meta_description %}Conoce más sobre GuessItYet, el juego de adivinanzas de videojuegos.{% endblock %}
+{% block meta_description %}Conoce más sobre GuessItYet y su creador. Un juego diario inspirado en Wordle para adivinar videojuegos.{% endblock %}
 
 {% block content %}
-<div class="page-container">
-    <div class="page-header text-center mb-5">
-        <h1><i class="fas fa-info-circle me-2"></i>Acerca de GuessItYet</h1>
-        <p class="lead text-muted">La historia detrás del juego</p>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-xl-10 px-4">
+            <div class="page-header text-center mb-4 py-4">
+                <h1><i class="fas fa-info-circle me-2"></i>Acerca de</h1>
+                <p class="lead text-muted">Conoce la historia detrás de GuessItYet</p>
+            </div>
+
+            <!-- Sección del creador -->
+            <section class="mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center p-5">
+                                <!-- Foto del creador -->
+                                <div class="mb-4">
+                                    <img src="{% static 'images/foto-about.jpg' %}"
+                                         alt="Foto del desarrollador"
+                                         class="rounded-circle shadow-sm"
+                                         style="width: 150px; height: 150px; object-fit: cover;">
+                                </div>
+
+                                <h2 class="h3 mb-3 text-primary">
+                                    <i class="fas fa-code me-2"></i>
+                                    El Desarrollador
+                                </h2>
+
+                                <p class="lead mb-4">
+                                    ¡Hola! Soy un desarrollador web junior que acaba de terminar su formación y está emocionado
+                                    por crear proyectos que combinen tecnología con diversión.
+                                </p>
+
+                                <div class="row text-start">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex align-items-start">
+                                            <i class="fas fa-layer-group text-primary me-3 mt-1"></i>
+                                            <div>
+                                                <h5 class="mb-2">Full Stack Developer</h5>
+                                                <p class="mb-0 text-muted">
+                                                    Me siento cómodo tanto en el front como el backend, creando experiencias
+                                                    completas desde la base de datos hasta la interfaz de usuario.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex align-items-start">
+                                            <i class="fas fa-search-plus text-primary me-3 mt-1"></i>
+                                            <div>
+                                                <h5 class="mb-2">Atención al Detalle</h5>
+                                                <p class="mb-0 text-muted">
+                                                    Me encanta cuidar cada aspecto del desarrollo, desde la optimización
+                                                    del código hasta la experiencia de usuario más fluida.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex align-items-start">
+                                            <i class="fas fa-gamepad text-primary me-3 mt-1"></i>
+                                            <div>
+                                                <h5 class="mb-2">Gamer de Corazón</h5>
+                                                <p class="mb-0 text-muted">
+                                                    Los videojuegos han sido mi pasión desde siempre, y crear un proyecto
+                                                    que los celebre era un sueño hecho realidad.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="d-flex align-items-start">
+                                            <i class="fas fa-lightbulb text-primary me-3 mt-1"></i>
+                                            <div>
+                                                <h5 class="mb-2">Aprendizaje Continuo</h5>
+                                                <p class="mb-0 text-muted">
+                                                    Siempre busco nuevas tecnologías y metodologías para mejorar mis
+                                                    habilidades y crear mejores aplicaciones.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inspiración del proyecto -->
+            <section class="mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-5">
+                                <h3 class="mb-3 text-center">
+                                    <i class="fas fa-rocket me-2 text-warning"></i>
+                                    La Inspiración
+                                </h3>
+
+                                <p class="mb-4">
+                                    GuessItYet nació de mi fascinación por los juegos diarios que se han vuelto tan populares.
+                                    He pasado horas con amigos intentando adivinar juntos en clásicos como
+                                    <strong>Wordle</strong>, <strong>Guess the Game</strong>, <strong>Guess the Movie</strong>
+                                    y otros desafíos diarios similares, quería crear
+                                    algo que combinara mi pasión por los videojuegos con la emoción de resolver
+                                    un nuevo puzzle cada día.
+                                </p>
+
+                                <div class="row text-center mb-4">
+                                    <div class="col-6 col-md-3 mb-3">
+                                        <div class="p-3">
+                                            <div class="text-primary mb-2" style="font-size: 2rem;">🎯</div>
+                                            <div class="fw-bold">Wordle</div>
+                                            <small class="text-muted">Palabras diarias</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3 mb-3">
+                                        <div class="p-3">
+                                            <div class="text-primary mb-2" style="font-size: 2rem;">🎮</div>
+                                            <div class="fw-bold">Guess the Game</div>
+                                            <small class="text-muted">Adivina juegos</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3 mb-3">
+                                        <div class="p-3">
+                                            <div class="text-primary mb-2" style="font-size: 2rem;">🎬</div>
+                                            <div class="fw-bold">Guess the Movie</div>
+                                            <small class="text-muted">Adivina películas</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3 mb-3">
+                                        <div class="p-3">
+                                            <div class="text-primary mb-2" style="font-size: 2rem;">📅</div>
+                                            <div class="fw-bold">Juegos Diarios</div>
+                                            <small class="text-muted">Desafíos 24h</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="mb-0">
+                                    La idea era simple pero efectiva: crear un espacio donde los amantes de los videojuegos
+                                    pudieran poner a prueba sus conocimientos cada 24 horas, compartir sus logros con amigos
+                                    y volver siempre con ganas de más. Un pequeño ritual diario que celebra la cultura gamer.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tecnologías utilizadas -->
+            <section class="mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-5">
+                                <h3 class="mb-3 text-center">
+                                    <i class="fas fa-tools me-2 text-success"></i>
+                                    Construido con Cariño
+                                </h3>
+
+                                <p class="text-center mb-4">
+                                    GuessItYet está desarrollado utilizando tecnologías modernas y robustas:
+                                </p>
+
+                                <div class="row text-center">
+                                    <div class="col-6 col-md-4 mb-3">
+                                        <div class="p-3">
+                                            <i class="fab fa-python text-success mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-bold">Django</div>
+                                            <small class="text-muted">Backend sólido</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4 mb-3">
+                                        <div class="p-3">
+                                            <i class="fab fa-js-square text-warning mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-bold">JavaScript</div>
+                                            <small class="text-muted">Interactividad</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4 mb-3">
+                                        <div class="p-3">
+                                            <i class="fab fa-bootstrap text-primary mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-bold">Bootstrap</div>
+                                            <small class="text-muted">Diseño responsive</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4 mb-3">
+                                        <div class="p-3">
+                                            <i class="fas fa-database text-info mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-bold">PostgreSQL</div>
+                                            <small class="text-muted">Base de datos</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4 mb-3">
+                                        <div class="p-3">
+                                            <i class="fas fa-server text-secondary mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-bold">IGDB API</div>
+                                            <small class="text-muted">Datos de juegos</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-4 mb-3">
+                                        <div class="p-3">
+                                            <i class="fas fa-heart text-danger mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-bold">Pasión</div>
+                                            <small class="text-muted">Ingrediente secreto</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Agradecimiento final -->
+            <section class="mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-body text-center p-5">
+                                <h3 class="mb-3">
+                                    <i class="fas fa-heart me-2"></i>
+                                    Gracias por Visitarnos
+                                </h3>
+
+                                <p class="mb-4 opacity-90">
+                                    Muchas gracias por tomarte el tiempo de conocer más sobre GuessItYet. Este proyecto
+                                    es mi forma de contribuir a la comunidad gamer y de demostrar lo que he aprendido
+                                    durante mi formación como desarrollador.
+                                </p>
+
+                                <p class="mb-4 opacity-90">
+                                    Espero que te diviertas muchísimo jugando, que disfrutes poniendo a prueba tus
+                                    conocimientos sobre videojuegos y que vuelvas cada día para el nuevo desafío.
+                                </p>
+                                <p class="mb-4 opacity-90">
+                                    ¡Y no olvides retar a tus amigos!
+                                </p>
+
+                                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                                    <a href="{% url 'guessityet:daily_game' %}" class="btn btn-outline-light btn-lg text-decoration-none">
+                                        <i class="fas fa-play me-2"></i>
+                                        ¡A Jugar!
+                                    </a>
+                                    <a href="{% url 'guessityet:how_to_play' %}" class="btn btn-outline-light btn-lg text-decoration-none">
+                                        <i class="fas fa-question-circle me-2"></i>
+                                        Cómo Jugar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
     </div>
-    
-    <!-- Contenido sobre el proyecto se desarrollará aquí -->
-    
 </div>
 {% endblock %}
