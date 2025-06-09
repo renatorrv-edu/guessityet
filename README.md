@@ -239,7 +239,6 @@ cd frontend && npm test
 
 ### Versión 1.1 (Próxima)
 - [ ] Sistema multijugador con lobbies
-- [ ] Temas personalizables
 - [ ] Más tipos de pistas
 
 ## Licencia
