@@ -1,5 +1,4 @@
 # Archivos de desarrollo y CI que NO queremos en producción
-config/settings_ci.py
 .github/
 *.md
 README.md
