@@ -9,243 +9,288 @@
 {% endblock %}
 
 {% block content %}
+{% if is_historical %}
+    <!-- Banner para juegos históricos -->
+    <div class="alert alert-info text-center mb-4 fade-in">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{% url 'guessityet:game_history' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Historial
+            </a>
+
+            <div class="flex-grow-1 mx-3">
+                <i class="fas fa-history me-2"></i>
+                <strong>Juego Histórico del {{ historical_date|date:"j \d\e F \d\e Y" }}</strong>
+            </div>
+
+            <button onclick="playRandomGame()" class="btn btn-outline-success btn-sm">
+                <i class="fas fa-random me-2"></i>Otro Aleatorio
+            </button>
+        </div>
+    </div>
+{% endif %}
+
 <div class="container">
-    <!-- Header de la página -->
-    <div class="page-header">
-        <h1>
+    <!-- Header simple -->
+    <div class="text-center mb-4">
+        <h1 class="mb-2">
             <i class="fas fa-history me-2"></i>
             Historial de Juegos
         </h1>
-        <p class="mb-0">Explora todos los juegos diarios anteriores</p>
-    </div>
+        <p class="text-muted mb-3">Revisa tu progreso y juega partidas anteriores</p>
 
-    <!-- Resumen de estadísticas -->
-    <div class="stats-summary">
-        <h5 class="mb-3 text-center">
-            <i class="fas fa-chart-bar me-2"></i>
-            Resumen General
-        </h5>
-        <div class="stats-grid">
-            <div class="stat-item">
-                <div class="stat-value">{{ total_games }}</div>
-                <div class="stat-label">Total Juegos</div>
-            </div>
-            {% if user.is_authenticated %}
-                <div class="stat-item">
-                    <div class="stat-value">{{ user_stats.played|default:0 }}</div>
-                    <div class="stat-label">Jugados</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ user_stats.won|default:0 }}</div>
-                    <div class="stat-label">Ganados</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{ user_stats.win_rate|default:0 }}%</div>
-                    <div class="stat-label">Tasa Éxito</div>
-                </div>
-            {% endif %}
+        <!-- Botones de acción principales -->
+        <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
+            <a href="{% url 'guessityet:daily_game' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Juego Actual
+            </a>
+            <button class="btn btn-outline-success" onclick="playRandomGame()">
+                <i class="fas fa-random me-2"></i>Jugar Partida Aleatoria
+            </button>
         </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="filters-card">
-        <h6 class="mb-3">
-            <i class="fas fa-filter me-2"></i>
-            Filtros
-        </h6>
-        <form method="get" id="filters-form">
-            <div class="filter-group">
-                <div class="filter-item">
-                    <label class="filter-label">Buscar por título</label>
-                    <input type="text"
-                           name="search"
-                           class="filter-input"
-                           placeholder="Nombre del juego..."
-                           value="{{ request.GET.search }}">
-                </div>
-
-                <div class="filter-item">
-                    <label class="filter-label">Estado</label>
-                    <select name="status" class="filter-input">
-                        <option value="">Todos los juegos</option>
-                        {% if user.is_authenticated %}
-                            <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completados</option>
-                            <option value="failed" {% if request.GET.status == 'failed' %}selected{% endif %}>Fallidos</option>
-                            <option value="not_played" {% if request.GET.status == 'not_played' %}selected{% endif %}>Sin jugar</option>
-                        {% endif %}
-                    </select>
-                </div>
-
-                <div class="filter-item">
-                    <label class="filter-label">Ordenar por</label>
-                    <select name="order" class="filter-input">
-                        <option value="-date" {% if request.GET.order == '-date' %}selected{% endif %}>Más recientes</option>
-                        <option value="date" {% if request.GET.order == 'date' %}selected{% endif %}>Más antiguos</option>
-                        <option value="title" {% if request.GET.order == 'title' %}selected{% endif %}>Título A-Z</option>
-                        <option value="-title" {% if request.GET.order == '-title' %}selected{% endif %}>Título Z-A</option>
-                    </select>
-                </div>
-
-                <div class="filter-item">
-                    <label class="filter-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search me-1"></i>
-                        Filtrar
-                    </button>
-                </div>
+    <!-- Resumen de estadísticas SOLO para usuarios autenticados -->
+    {% if user.is_authenticated %}
+    <div class="stats-summary-compact mb-4">
+        <div class="stats-grid-compact">
+            <div class="stat-item-compact">
+                <span class="stat-value">{{ total_games }}</span>
+                <span class="stat-label">Juegos Totales</span>
             </div>
-        </form>
+            <div class="stat-item-compact">
+                <span class="stat-value">{{ user_stats.played|default:0 }}</span>
+                <span class="stat-label">Jugados</span>
+            </div>
+            <div class="stat-item-compact">
+                <span class="stat-value">{{ user_stats.won|default:0 }}</span>
+                <span class="stat-label">Ganados</span>
+            </div>
+            <div class="stat-item-compact">
+                <span class="stat-value">{{ user_stats.win_rate|default:0 }}%</span>
+                <span class="stat-label">Tasa de Éxito</span>
+            </div>
+        </div>
     </div>
+    {% endif %}
 
-    <!-- Grid de juegos -->
-    {% if daily_games %}
-        <div class="game-grid">
+    <!-- Grid de juegos como rectángulos -->
+    <div class="game-grid">
+        {% if daily_games %}
             {% for daily_game in daily_games %}
-                <div class="game-card" onclick="viewGame('{{ daily_game.date|date:'Y-m-d' }}')">
-                    <div class="game-thumbnail">
-                        {% if daily_game.game.screenshot_set.first %}
-                            <img src="{% if daily_game.game.screenshot_set.first.local_path %}/media/{{ daily_game.game.screenshot_set.first.local_path }}{% else %}{{ daily_game.game.screenshot_set.first.image_url }}{% endif %}"
-                                 alt="{{ daily_game.game.title }}">
-                        {% else %}
-                            <i class="fas fa-gamepad"></i>
-                        {% endif %}
+            <div class="game-card" data-game-id="{{ daily_game.id }}">
+                <!-- Encabezado de la tarjeta -->
+                <div class="game-card-header">
+                    <div class="game-date">{{ daily_game.date|date:"d M Y" }}</div>
+                    <div class="game-number">Juego #{{ total_games|add:"-"|add:forloop.counter0 }}</div>
+                </div>
 
-                        <div class="game-date">
-                            {{ daily_game.date|date:"j M" }}
-                        </div>
-
-                        {% if user.is_authenticated %}
-                            <div class="completion-badge
-                                {% if daily_game.user_attempt %}
-                                    {% if daily_game.user_attempt.success %}completed{% else %}failed{% endif %}
+                <!-- Indicadores de progreso (6 casillas estilo Wordle) -->
+                <div class="attempt-indicators-grid">
+                    {% if user.is_authenticated and daily_game.user_attempt %}
+                        <!-- Usuario autenticado CON progreso en este juego -->
+                        {% for i in "123456" %}
+                            {% if daily_game.user_attempt.success and forloop.counter <= daily_game.user_attempt.attempts_used %}
+                                <!-- Intentos hasta ganar -->
+                                {% if forloop.counter == daily_game.user_attempt.attempts_used %}
+                                    <div class="attempt-indicator correct">✓</div>
                                 {% else %}
-                                    not-played
-                                {% endif %}">
-                                {% if daily_game.user_attempt %}
-                                    {% if daily_game.user_attempt.success %}
-                                        {{ daily_game.user_attempt.attempts_used }}
-                                    {% else %}
-                                        <i class="fas fa-times"></i>
-                                    {% endif %}
-                                {% else %}
-                                    <i class="fas fa-question"></i>
+                                    <div class="attempt-indicator wrong">✗</div>
                                 {% endif %}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="game-info">
-                        <div class="game-title">{{ daily_game.game.title }}</div>
-
-                        <div class="game-meta">
-                            <div>
-                                <i class="fas fa-calendar"></i>
-                                {{ daily_game.date|date:"l, j \d\e F" }}
-                            </div>
-                            {% if daily_game.game.developer %}
-                                <div>
-                                    <i class="fas fa-code"></i>
-                                    {{ daily_game.game.developer }}
-                                </div>
+                            {% elif not daily_game.user_attempt.success and forloop.counter <= 6 %}
+                                <!-- Perdió - todas rojas -->
+                                <div class="attempt-indicator wrong">✗</div>
+                            {% else %}
+                                <!-- No usado -->
+                                <div class="attempt-indicator unused">?</div>
                             {% endif %}
-                            {% if daily_game.game.release_year %}
-                                <div>
-                                    <i class="fas fa-clock"></i>
-                                    {{ daily_game.game.release_year }}
-                                </div>
-                            {% endif %}
-                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Usuario NO autenticado O autenticado sin progreso en este juego -->
+                        {% for i in "123456" %}
+                            <div class="attempt-indicator unplayed">?</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
 
-                        <div class="game-stats">
-                            {% if user.is_authenticated and daily_game.user_attempt %}
-                                <div class="game-result {% if daily_game.user_attempt.success %}completed{% else %}failed{% endif %}">
-                                    {% if daily_game.user_attempt.success %}
-                                        <i class="fas fa-trophy"></i>
-                                        Ganado en {{ daily_game.user_attempt.attempts_used }} intento{{ daily_game.user_attempt.attempts_used|pluralize }}
-                                    {% else %}
-                                        <i class="fas fa-times"></i>
-                                        No completado
-                                    {% endif %}
-                                </div>
-                            {% elif user.is_authenticated %}
-                                <div class="game-result not-played">
-                                    <i class="fas fa-question"></i>
-                                    Sin jugar
+                <!-- Estado del juego -->
+                <div class="game-status-section">
+                    {% if user.is_authenticated and daily_game.user_attempt %}
+                        <!-- Usuario autenticado con progreso -->
+                        {% if daily_game.user_attempt.success %}
+                            {% if daily_game.user_attempt.attempts_used == 1 %}
+                                <div class="status-badge guessed-it">
+                                    <i class="fas fa-star me-1"></i>¡GUESSED IT!
                                 </div>
                             {% else %}
-                                <div class="game-result">
-                                    <i class="fas fa-gamepad"></i>
-                                    Disponible
+                                <div class="status-badge completed">
+                                    <i class="fas fa-trophy me-1"></i>Completado
                                 </div>
                             {% endif %}
-
-                            <div class="game-actions">
-                                <button class="btn-view" onclick="event.stopPropagation(); viewGame('{{ daily_game.date|date:'Y-m-d' }}')">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        {% else %}
+                            <div class="status-badge failed">
+                                <i class="fas fa-times me-1"></i>Perdido
                             </div>
+                        {% endif %}
+                    {% else %}
+                        <!-- Usuario sin progreso o no autenticado -->
+                        <div class="status-badge not-played">
+                            {% if user.is_authenticated %}
+                                <i class="fas fa-hourglass me-1"></i>Sin Jugar
+                            {% else %}
+                                <i class="fas fa-user me-1"></i>Regístrate para ver progreso
+                            {% endif %}
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
+
+                <!-- Botón de acción -->
+                <div class="game-card-footer">
+                    <a href="{% url 'guessityet:game_detail' daily_game.date|date:'Y-m-d' %}"
+                       class="btn btn-play-card"
+                       title="Jugar este juego">
+                        <i class="fas fa-play me-2"></i>Jugar
+                    </a>
+                </div>
+            </div>
             {% endfor %}
-        </div>
-    {% else %}
-        <div class="empty-state">
-            <i class="fas fa-gamepad"></i>
-            <h4>No hay juegos disponibles</h4>
-            <p>{% if request.GET.search %}No se encontraron juegos que coincidan con tu búsqueda.{% else %}Aún no hay juegos en el historial.{% endif %}</p>
-            {% if request.GET.search %}
-                <a href="{% url 'guessityet:game_history' %}" class="btn btn-primary">
-                    <i class="fas fa-list me-2"></i>Ver Todos los Juegos
-                </a>
-            {% else %}
+        {% else %}
+            <!-- Estado vacío -->
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <h4>No hay juegos disponibles</h4>
+                <p>Los juegos diarios aparecerán aquí cuando estén disponibles.</p>
                 <a href="{% url 'guessityet:daily_game' %}" class="btn btn-primary">
-                    <i class="fas fa-play me-2"></i>Jugar Ahora
+                    <i class="fas fa-gamepad me-2"></i>Jugar Hoy
                 </a>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="pagination-container">
+        <nav aria-label="Navegación de páginas">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
     {% endif %}
+</div>
+
+<!-- Modal para juego aleatorio -->
+<div class="modal fade" id="randomGameModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-random me-2"></i>Jugar Partida Aleatoria
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="loading-random-game">
+                    <i class="fas fa-dice fa-spin fa-3x mb-3 text-primary"></i>
+                    <p>Seleccionando un juego aleatorio...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function viewGame(date) {
-    window.location.href = `/guessityet/historial/${date}/`;
+// Función para jugar partida aleatoria
+async function playRandomGame() {
+    const modal = new bootstrap.Modal(document.getElementById('randomGameModal'));
+    modal.show();
+
+    try {
+        const response = await fetch('/guessityet/juego-aleatorio/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            }
+        } else {
+            modal.hide();
+            alert('Error al generar juego aleatorio');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        modal.hide();
+        alert('Error de conexión');
+    }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit del formulario de filtros con debounce
-    const searchInput = document.querySelector('input[name="search"]');
-    const selectInputs = document.querySelectorAll('select');
-    let searchTimeout;
-
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                document.getElementById('filters-form').submit();
-            }, 500);
-        });
+// Función para obtener CSRF token
+function getCSRFToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return value;
+        }
     }
+    return '';
+}
 
-    selectInputs.forEach(select => {
-        select.addEventListener('change', function() {
-            document.getElementById('filters-form').submit();
-        });
-    });
-
-    // Animación de entrada para las tarjetas
+// Efectos de hover mejorados
+document.addEventListener('DOMContentLoaded', function() {
     const gameCards = document.querySelectorAll('.game-card');
-    gameCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
 
-        setTimeout(() => {
-            card.style.transition = 'all 0.3s ease';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 50);
+    gameCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
     });
 });
 </script>
