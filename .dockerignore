@@ -1,57 +1,58 @@
-# Git
-.git
-.gitignore
+# Archivos de desarrollo y CI que NO queremos en producción
+config/settings_ci.py
+.github/
+*.md
 README.md
-.github
+
+# Archivos de entorno y secrets
+.env.example
+*.env.local
+*.env.development
+
+# Archivos de desarrollo
+.git/
+.gitignore
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Python
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
-env
-venv
-.venv
-pip-log.txt
-pip-delete-this-directory.txt
-.tox
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
 .coverage
-.coverage.*
-.pytest_cache
-htmlcov
+.nyc_output
+.tox/
 
-# Django
-*.log
-local_settings.py
-db.sqlite3
-media/
-
-# Node.js (si tuvieras frontend)
-node_modules
-npm-debug.log*
-
-# IDE
-.vscode
-.idea
+# IDEs
+.vscode/
+.idea/
 *.swp
 *.swo
-*~
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Docker
-Dockerfile*
-docker-compose*
-.dockerignore
-
-# Archivos de entorno
-.env
-.env.local
-.env.production
+# Logs
+logs/
+*.log
 
 # Archivos temporales
-*.tmp
-*.temp
+.DS_Store
+Thumbs.db
+.tmp/
+.cache/
+
+# Testing
+coverage.xml
+.coverage
+htmlcov/
+
+# Documentación
+docs/
+*.txt
+!requirements.txt
+!requirements-dev.txt
+
+# Scripts de desarrollo
+scripts/local/
