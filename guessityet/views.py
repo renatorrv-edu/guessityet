@@ -295,8 +295,7 @@ class CustomRegisterView(CreateView):
 
     form_class = CustomUserCreationForm
     template_name = "registration/register.html"
-    # CORREGIR ESTA LÍNEA:
-    success_url = reverse_lazy("guessityet:registration_complete")
+    success_url = reverse_lazy("registration_complete")
 
     def form_valid(self, form):
         # Crear usuario pero marcarlo como inactivo
