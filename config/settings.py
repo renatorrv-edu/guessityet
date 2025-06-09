@@ -339,7 +339,7 @@ GAME_CACHE_TIMEOUT = 60 * 60 * 24  # 24 horas
 MAX_SCREENSHOTS_PER_GAME = 15
 MAX_GAME_SEARCH_RESULTS = 25
 
-# Configuración para el análisis de imágenes con IA
+# Configuración para el análisis de imágenes con la IA
 OPENAI_IMAGE_ANALYSIS_ENABLED = bool(OPENAI_API_KEY)
 OPENAI_MAX_IMAGE_SIZE = 1024  # px
 OPENAI_IMAGE_QUALITY = "low"  # Para reducir costos
