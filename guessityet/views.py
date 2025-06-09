@@ -1,6 +1,6 @@
-# guessityet/views.py - Migrado a Class-Based Views
+# guessityet/views.py - Migrado a Class-Based Views con confirmación de email
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponse, Http404
 from django.utils import timezone
 from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_http_methods
@@ -14,15 +14,32 @@ from django.contrib.auth import login
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
+from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 import json
 import time
 import re
+import logging
 
-from .models import Game, DailyGame, Screenshot, UserProfile, UserGameAttempt
+from .models import (
+    Game,
+    DailyGame,
+    Screenshot,
+    UserProfile,
+    UserGameAttempt,
+    EmailConfirmationToken,
+)
 from .services.rawg_service import RAWGService
 from .services.igdb_service import IGDBService
+from .services.email_service import EmailService
 from .forms import CustomUserCreationForm
+
+logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# VISTAS PRINCIPALES DEL JUEGO
+# ============================================================================
 
 
 class DailyGameView(TemplateView):
@@ -87,7 +104,7 @@ class DailyGameView(TemplateView):
 
 
 class GameHistoryView(ListView):
-    """Vista del historial de juegos diarios"""
+    """Vista del historial de juegos diarios - Simplificada"""
 
     model = DailyGame
     template_name = "game/game_history.html"
@@ -98,9 +115,8 @@ class GameHistoryView(ListView):
     def get_queryset(self):
         queryset = super().get_queryset().select_related("game")
 
-        # Agregar información de si el usuario completó cada juego
+        # Solo prefetch para usuarios autenticados
         if self.request.user.is_authenticated:
-            # Prefetch related user attempts
             queryset = queryset.prefetch_related("usergameattempt_set")
 
         return queryset
@@ -108,6 +124,7 @@ class GameHistoryView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        # Solo calcular datos para usuarios autenticados
         if self.request.user.is_authenticated:
             # Obtener intentos del usuario para los juegos en la página actual
             daily_game_ids = [dg.id for dg in context["daily_games"]]
@@ -124,15 +141,66 @@ class GameHistoryView(ListView):
             for daily_game in context["daily_games"]:
                 daily_game.user_attempt = attempts_dict.get(daily_game.id)
 
+            # Calcular estadísticas del usuario para mostrar en el template
+            all_user_attempts = UserGameAttempt.objects.filter(user=self.request.user)
+            total_played = all_user_attempts.count()
+            total_won = all_user_attempts.filter(success=True).count()
+            win_rate = (total_won / total_played * 100) if total_played > 0 else 0
+
+            # Agregar estadísticas al contexto
+            context["user_stats"] = {
+                "played": total_played,
+                "won": total_won,
+                "win_rate": round(win_rate, 1),
+            }
+        else:
+            # Para usuarios no autenticados, no hay user_attempt ni estadísticas
+            for daily_game in context["daily_games"]:
+                daily_game.user_attempt = None
+
+            context["user_stats"] = {
+                "played": 0,
+                "won": 0,
+                "win_rate": 0,
+            }
+
         context["total_games"] = self.get_queryset().count()
         return context
 
 
+class RandomGameView(View):
+    """Vista para generar y jugar un juego aleatorio"""
+
+    def post(self, request, *args, **kwargs):
+        try:
+            # Obtener un juego aleatorio de los ya disponibles
+            random_daily_game = DailyGame.objects.order_by("?").first()
+
+            if not random_daily_game:
+                return JsonResponse(
+                    {"error": "No hay juegos disponibles", "success": False}, status=404
+                )
+
+            # Redirigir directamente a GameDetailView con el juego aleatorio
+            return JsonResponse(
+                {
+                    "success": True,
+                    "redirect_url": reverse(
+                        "guessityet:game_detail",
+                        args=[random_daily_game.date.strftime("%Y-%m-%d")],
+                    ),
+                }
+            )
+
+        except Exception as e:
+            return JsonResponse({"error": str(e), "success": False}, status=500)
+
+
 class GameDetailView(DetailView):
-    """Vista de detalle de un juego específico por fecha"""
+    """Vista de detalle de un juego específico por fecha - Mejorada"""
 
     model = DailyGame
-    template_name = "game/game_detail.html"
+    template_name = "game/daily_game.html"  # Reutilizar el template principal
     context_object_name = "daily_game"
 
     def get_object(self, queryset=None):
@@ -153,6 +221,21 @@ class GameDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         daily_game = context["daily_game"]
 
+        # Limpiar la sesión para empezar fresh
+        if "game_state" in self.request.session:
+            del self.request.session["game_state"]
+
+        # Inicializar sesión de juego para este juego específico
+        self.request.session["game_state"] = {
+            "game_id": daily_game.game.id,
+            "current_attempt": 1,
+            "attempts": [],
+            "won": False,
+            "lost": False,
+            "guessed_it": False,
+        }
+        self.request.session.modified = True
+
         # Obtener información del intento del usuario si está autenticado
         user_attempt = None
         if self.request.user.is_authenticated:
@@ -163,13 +246,22 @@ class GameDetailView(DetailView):
             except UserGameAttempt.DoesNotExist:
                 pass
 
+        # Determinar si es el juego de hoy
+        today = timezone.now().astimezone().date()
+        is_today = daily_game.date == today
+
         context.update(
             {
                 "game": daily_game.game,
                 "screenshots": daily_game.game.screenshot_set.all().order_by(
                     "difficulty"
                 ),
+                "game_state": self.request.session["game_state"],
+                "game_state_json": json.dumps(self.request.session["game_state"]),
                 "user_attempt": user_attempt,
+                "today": daily_game.date,  # Usar la fecha del juego, no hoy
+                "is_historical": not is_today,  # Flag para mostrar si es histórico
+                "historical_date": daily_game.date if not is_today else None,
             }
         )
 
@@ -194,28 +286,49 @@ class AboutView(TemplateView):
 
 
 # ============================================================================
-# VISTAS DE AUTENTICACIÓN
+# VISTAS DE AUTENTICACIÓN CON CONFIRMACIÓN DE EMAIL
 # ============================================================================
 
 
 class CustomRegisterView(CreateView):
-    """Vista de registro personalizada"""
+    """Vista de registro personalizada con confirmación por email"""
 
     form_class = CustomUserCreationForm
     template_name = "registration/register.html"
-    success_url = reverse_lazy("login")
+    success_url = reverse_lazy("registration_complete")
 
     def form_valid(self, form):
+        # Crear usuario pero marcarlo como inactivo
         response = super().form_valid(form)
+        user = self.object
 
-        # Crear perfil de usuario automáticamente
-        UserProfile.objects.create(user=self.object)
+        # El usuario está inactivo hasta confirmar email
+        user.is_active = False
+        user.save()
 
-        # Mensaje de éxito
-        messages.success(
-            self.request,
-            f"¡Cuenta creada para {self.object.username}! Ya puedes iniciar sesión.",
+        # Crear perfil de usuario
+        profile, created = UserProfile.objects.get_or_create(
+            user=user, defaults={"email_confirmed": False}
         )
+
+        # Crear token de confirmación
+        token = EmailConfirmationToken.objects.create(user=user)
+
+        # Enviar email de confirmación
+        email_sent = EmailService.send_confirmation_email(user, token)
+
+        if email_sent:
+            messages.success(
+                self.request,
+                f"¡Cuenta creada para {user.username}! "
+                f"Revisa tu email {user.email} para confirmar tu cuenta.",
+            )
+        else:
+            messages.warning(
+                self.request,
+                f"Cuenta creada pero hubo un problema enviando el email de confirmación. "
+                f"Puedes solicitar un reenvío desde la página de login.",
+            )
 
         return response
 
@@ -224,6 +337,150 @@ class CustomRegisterView(CreateView):
         if request.user.is_authenticated:
             return redirect("guessityet:daily_game")
         return super().dispatch(request, *args, **kwargs)
+
+
+class RegistrationCompleteView(TemplateView):
+    """Vista que se muestra después del registro"""
+
+    template_name = "registration/registration_complete.html"
+
+
+class ConfirmEmailView(View):
+    """Vista para confirmar email con token"""
+
+    def get(self, request, token):
+        try:
+            # Buscar token válido
+            confirmation_token = get_object_or_404(EmailConfirmationToken, token=token)
+
+            # Verificar si el token es válido
+            if not confirmation_token.is_valid():
+                if confirmation_token.is_expired():
+                    messages.error(
+                        request,
+                        "Este enlace de confirmación ha expirado. "
+                        "Puedes solicitar un nuevo enlace desde la página de login.",
+                    )
+                else:
+                    messages.error(
+                        request, "Este enlace de confirmación ya ha sido utilizado."
+                    )
+                return redirect("login")
+
+            # Confirmar usuario
+            user = confirmation_token.user
+            user.is_active = True
+            user.save()
+
+            # Marcar email como confirmado en el perfil
+            if hasattr(user, "profile"):
+                user.profile.confirm_email()
+
+            # Marcar token como usado
+            confirmation_token.is_used = True
+            confirmation_token.save()
+
+            # Enviar email de bienvenida
+            EmailService.send_welcome_email(user)
+
+            # Auto-login del usuario
+            login(request, user)
+
+            messages.success(
+                request,
+                f"¡Tu cuenta ha sido confirmada exitosamente! "
+                f"Bienvenido a Guess It Yet?, {user.username}.",
+            )
+
+            logger.info(f"Usuario {user.username} confirmó su email exitosamente")
+
+            return redirect("guessityet:daily_game")
+
+        except Exception as e:
+            logger.error(f"Error en confirmación de email: {str(e)}")
+            messages.error(
+                request,
+                "Hubo un error procesando tu confirmación. "
+                "Por favor, contacta al soporte.",
+            )
+            return redirect("login")
+
+
+class ResendConfirmationView(View):
+    """Vista para reenviar email de confirmación"""
+
+    def post(self, request):
+        email = request.POST.get("email", "").strip()
+
+        if not email:
+            messages.error(request, "Por favor, ingresa tu email.")
+            return redirect("login")
+
+        try:
+            # Buscar usuario por email
+            user = User.objects.get(email=email, is_active=False)
+
+            # Verificar que el usuario necesita confirmación
+            if hasattr(user, "profile") and user.profile.email_confirmed:
+                messages.info(
+                    request,
+                    "Este email ya está confirmado. Puedes iniciar sesión normalmente.",
+                )
+                return redirect("login")
+
+            # Reenviar email de confirmación
+            success = EmailService.resend_confirmation_email(user)
+
+            if success:
+                messages.success(
+                    request,
+                    f"Email de confirmación reenviado a {email}. "
+                    f"Revisa tu bandeja de entrada y spam.",
+                )
+            else:
+                messages.error(
+                    request,
+                    "Hubo un problema reenviando el email. "
+                    "Inténtalo de nuevo más tarde.",
+                )
+
+        except User.DoesNotExist:
+            # No revelamos si el email existe o no por seguridad
+            messages.info(
+                request,
+                "Si existe una cuenta con ese email que necesite confirmación, "
+                "recibirás un nuevo enlace de confirmación.",
+            )
+
+        return redirect("login")
+
+
+class CustomLoginView(LoginView):
+    """Vista de login personalizada que verifica confirmación de email"""
+
+    template_name = "registration/login.html"
+
+    def form_invalid(self, form):
+        # Verificar si es un problema de usuario no activado
+        username = form.cleaned_data.get("username")
+
+        if username:
+            try:
+                user = User.objects.get(username=username, is_active=False)
+
+                # Verificar si es por falta de confirmación de email
+                if hasattr(user, "profile") and not user.profile.email_confirmed:
+                    messages.warning(
+                        self.request,
+                        f"Tu cuenta aún no está confirmada. "
+                        f"Revisa tu email {user.email} o solicita un reenvío.",
+                    )
+                    return redirect("login")
+
+            except User.DoesNotExist:
+                pass
+
+        return super().form_invalid(form)
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -987,6 +1244,13 @@ how_to_play = HowToPlayView.as_view()
 about = AboutView.as_view()
 profile = ProfileView.as_view()
 update_profile = UpdateProfileView.as_view()
+
+# Vistas de autenticación
+register = CustomRegisterView.as_view()
+registration_complete = RegistrationCompleteView.as_view()
+confirm_email = ConfirmEmailView.as_view()
+resend_confirmation = ResendConfirmationView.as_view()
+login_view = CustomLoginView.as_view()
 
 # Vistas de testing
 generate_test_game = GenerateTestGameView.as_view()

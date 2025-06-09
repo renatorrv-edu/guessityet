@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import uuid
+from datetime import timedelta
 
 
 class Game(models.Model):
@@ -61,8 +63,52 @@ class UserProfile(models.Model):
     average_attempts = models.IntegerField(default=0)
     average_guesses = models.IntegerField(default=0)
 
+    # Nuevos campos para confirmación de email
+    email_confirmed = models.BooleanField(default=False)
+    email_confirmed_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"Perfil de {self.user.username}"
+
+    def confirm_email(self):
+        """Marcar el email como confirmado"""
+        self.email_confirmed = True
+        self.email_confirmed_at = timezone.now()
+        self.save()
+
+
+class EmailConfirmationToken(models.Model):
+    """Token para confirmación de email del usuario"""
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="confirmation_tokens"
+    )
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Token de confirmación"
+        verbose_name_plural = "Tokens de confirmación"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Token para {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            # Token expira en 24 horas
+            self.expires_at = timezone.now() + timedelta(hours=24)
+        super().save(*args, **kwargs)
+
+    def is_expired(self):
+        """Verificar si el token ha expirado"""
+        return timezone.now() > self.expires_at
+
+    def is_valid(self):
+        """Verificar si el token es válido"""
+        return not self.is_used and not self.is_expired()
 
 
 class UserGameAttempt(models.Model):
@@ -104,9 +150,9 @@ class LobbyPlayer(models.Model):
     joined_at = models.DateTimeField(null=True, blank=True)
 
 
+# Signals para manejar la creación automática de perfiles
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import User
 
 
 @receiver(post_save, sender=User)
