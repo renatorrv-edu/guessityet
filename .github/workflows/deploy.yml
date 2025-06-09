@@ -23,8 +23,10 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run tests
+      env:
+        DJANGO_SETTINGS_MODULE: config.settings_ci
       run: |
-        python manage.py check
+        python manage.py check --settings=config.settings_ci
         # python manage.py test  # Descomenta si tienes tests
 
   build-and-deploy:
