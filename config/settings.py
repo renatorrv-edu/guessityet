@@ -77,19 +77,26 @@ DATABASES = {
     }
 }
 
-# Password validation
+# Password validation - Validadores personalizados mejorados
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "guessityet.validators.CustomPasswordValidator",
+        "OPTIONS": {
+            "min_length": 8,
+        },
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": "guessityet.validators.UserAttributeSimilarityValidator",
+        "OPTIONS": {
+            "user_attributes": ["username", "first_name", "last_name", "email"],
+            "max_similarity": 0.7,
+        },
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": "guessityet.validators.NoCommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": "guessityet.validators.NoSequentialPasswordValidator",
     },
 ]
 
@@ -318,7 +325,7 @@ else:
         }
     }
 
-# ============= CONFIGURACIÓN DE EMAIL (opcional) =============
+# ============= CONFIGURACIÓN DE EMAIL =============
 if os.getenv("EMAIL_HOST"):
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = os.getenv("EMAIL_HOST")

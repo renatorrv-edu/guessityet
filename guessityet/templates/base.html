@@ -39,10 +39,129 @@
     <link rel="stylesheet" href="{% static 'css/variables.css' %}">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     {% block extra_css %}{% endblock %}
+
+    <!-- Estilos adicionales para notificaciones mejoradas -->
+    <style>
+        /* Contenedor de notificaciones fijo arriba */
+        .messages-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1060;
+            pointer-events: none;
+            padding: 1rem;
+        }
+
+        .messages-container .alert {
+            margin-bottom: 0.5rem;
+            pointer-events: auto;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-color);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        /* Animación de entrada */
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Espaciado para evitar que el contenido se oculte detrás de las notificaciones */
+        .messages-spacer {
+            height: 0;
+            transition: height 0.3s ease;
+        }
+
+        .messages-spacer.active {
+            height: 80px;
+        }
+
+        /* Estilos específicos para diferentes tipos de alertas */
+        .alert-success {
+            background: var(--status-success-bg);
+            border-left: 4px solid var(--success-color);
+            color: var(--status-success-text);
+        }
+
+        .alert-warning {
+            background: var(--status-warning-bg);
+            border-left: 4px solid var(--warning-color);
+            color: var(--status-warning-text);
+        }
+
+        .alert-danger, .alert-error {
+            background: var(--status-error-bg);
+            border-left: 4px solid var(--error-color);
+            color: var(--status-error-text);
+        }
+
+        .alert-info {
+            background: var(--status-info-bg);
+            border-left: 4px solid var(--info-color);
+            color: var(--status-info-text);
+        }
+
+        /* Auto-cerrar después de tiempo */
+        .alert[data-auto-dismiss="true"] {
+            animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 4.7s;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .messages-container {
+                padding: 0.5rem;
+            }
+
+            .messages-container .alert {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
 <body class="{% block body_class %}{% endblock %}">
     <!-- CSRF Token para JavaScript -->
     {% csrf_token %}
+
+    <!-- Contenedor de notificaciones fijo arriba -->
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                     role="alert"
+                     data-auto-dismiss="true">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% elif message.tags == 'error' or message.tags == 'danger' %}
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="messages-spacer active"></div>
+    {% endif %}
 
     <div class="main-layout">
         <!-- Navigation -->
@@ -108,13 +227,13 @@
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <a class="dropdown-item" href="{% url 'password_change' %}">
+                                        <a class="dropdown-item" href="{% url 'guessityet:password_change' %}">
                                             <i class="fas fa-key me-2"></i>Cambiar Contraseña
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <a class="dropdown-item" href="{% url 'logout' %}">
+                                        <a class="dropdown-item" href="{% url 'guessityet:logout' %}">
                                             <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
                                         </a>
                                     </li>
@@ -122,7 +241,7 @@
                             </li>
                         {% else %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'login' %}">
+                                <a class="nav-link" href="{% url 'guessityet:login' %}">
                                     <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
                                 </a>
                             </li>
@@ -147,27 +266,6 @@
 
         <!-- Main content -->
         <main class="main-content">
-            <!-- Messages/Alerts -->
-            {% if messages %}
-                <div class="container mb-4">
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {% if message.tags == 'success' %}
-                                <i class="fas fa-check-circle me-2"></i>
-                            {% elif message.tags == 'warning' %}
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                            {% elif message.tags == 'error' or message.tags == 'danger' %}
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                            {% else %}
-                                <i class="fas fa-info-circle me-2"></i>
-                            {% endif %}
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
             <!-- Page content -->
             {% block content %}{% endblock %}
         </main>
@@ -200,9 +298,9 @@
                                 <ul class="list-unstyled small">
                                     {% if user.is_authenticated %}
                                         <li><a href="{% url 'guessityet:profile' %}" class="text-secondary text-decoration-none">Mi Perfil</a></li>
-                                        <li><a href="{% url 'logout' %}" class="text-secondary text-decoration-none">Cerrar Sesión</a></li>
+                                        <li><a href="{% url 'guessityet:logout' %}" class="text-secondary text-decoration-none">Cerrar Sesión</a></li>
                                     {% else %}
-                                        <li><a href="{% url 'login' %}" class="text-secondary text-decoration-none">Iniciar Sesión</a></li>
+                                        <li><a href="{% url 'guessityet:login' %}" class="text-secondary text-decoration-none">Iniciar Sesión</a></li>
                                         <li><a href="{% url 'guessityet:register' %}" class="text-secondary text-decoration-none">Registrarse</a></li>
                                     {% endif %}
                                 </ul>
@@ -234,6 +332,38 @@
     <!-- Custom JavaScript -->
     <script src="{% static 'js/base.js' %}"></script>
     <script src="{% static 'js/theme-switcher.js' %}"></script>
+
+    <!-- JavaScript para auto-cerrar notificaciones -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-cerrar alertas después de 5 segundos
+            const alerts = document.querySelectorAll('.alert[data-auto-dismiss="true"]');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+
+            // Ajustar espaciado dinámicamente
+            const messagesSpacer = document.querySelector('.messages-spacer');
+            if (messagesSpacer) {
+                // Remover espaciado cuando se cierren todas las alertas
+                const observer = new MutationObserver(() => {
+                    const visibleAlerts = document.querySelectorAll('.messages-container .alert');
+                    if (visibleAlerts.length === 0) {
+                        messagesSpacer.classList.remove('active');
+                    }
+                });
+
+                observer.observe(document.querySelector('.messages-container'), {
+                    childList: true,
+                    subtree: true
+                });
+            }
+        });
+    </script>
+
     {% block extra_js %}{% endblock %}
 
     <!-- Toast container para notificaciones -->

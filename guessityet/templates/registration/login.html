@@ -96,7 +96,7 @@
 
             <div class="auth-links">
                 <p>
-                    <a href="{% url 'password_reset' %}">
+                    <a href="{% url 'guessityet:password_reset' %}">
                         <i class="fas fa-key me-1"></i>
                         ¿Olvidaste tu contraseña?
                     </a>
@@ -122,69 +122,4 @@
 
 {% block extra_js %}
 <script src="{% static 'js/auth.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Toggle de contraseña
-    const passwordToggles = document.querySelectorAll('.password-toggle');
-    passwordToggles.forEach(toggle => {
-        toggle.addEventListener('click', function() {
-            const targetId = this.dataset.target;
-            const passwordField = document.getElementById(targetId);
-            const icon = this.querySelector('i');
-
-            if (passwordField.type === 'password') {
-                passwordField.type = 'text';
-                icon.className = 'fas fa-eye-slash';
-                this.setAttribute('aria-label', 'Ocultar contraseña');
-            } else {
-                passwordField.type = 'password';
-                icon.className = 'fas fa-eye';
-                this.setAttribute('aria-label', 'Mostrar contraseña');
-            }
-        });
-    });
-
-    // Estado de carga del formulario
-    const loginForm = document.getElementById('login-form');
-    const submitBtn = loginForm.querySelector('button[type="submit"]');
-
-    loginForm.addEventListener('submit', function() {
-        submitBtn.classList.add('loading');
-        submitBtn.disabled = true;
-
-        setTimeout(() => {
-            submitBtn.classList.remove('loading');
-            submitBtn.disabled = false;
-        }, 3000);
-    });
-
-    // Validación en tiempo real
-    const inputs = loginForm.querySelectorAll('.auth-form-control');
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            if (this.classList.contains('is-invalid') && this.value.trim()) {
-                this.classList.remove('is-invalid');
-                const feedback = this.parentNode.querySelector('.invalid-feedback');
-                if (feedback) {
-                    feedback.style.display = 'none';
-                }
-            }
-        });
-
-        input.addEventListener('blur', function() {
-            if (this.value.trim()) {
-                this.classList.add('valid');
-            } else {
-                this.classList.remove('valid');
-            }
-        });
-    });
-
-    // Auto-focus en el primer campo
-    const firstInput = loginForm.querySelector('input');
-    if (firstInput) {
-        firstInput.focus();
-    }
-});
-</script>
 {% endblock %}

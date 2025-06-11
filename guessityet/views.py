@@ -1261,3 +1261,34 @@ test_igdb_view = TestIGDBView.as_view()
 compare_services_view = CompareServicesView.as_view()
 debug_franchise = DebugFranchiseView.as_view()
 debug_igdb_auth = DebugIGDBAuthView.as_view()
+
+
+# En views.py - vista temporal para debug
+def test_email_direct(request):
+    from django.core.mail import send_mail
+    from django.conf import settings
+    from django.http import HttpResponse
+
+    try:
+        print("🔍 Probando envío directo...")
+        print(f"EMAIL_BACKEND: {settings.EMAIL_BACKEND}")
+        print(f"EMAIL_HOST: {getattr(settings, 'EMAIL_HOST', 'No configurado')}")
+        print(
+            f"EMAIL_HOST_USER: {getattr(settings, 'EMAIL_HOST_USER', 'No configurado')}"
+        )
+
+        result = send_mail(
+            subject="Test desde Django - GuessItYet",
+            message="Este es un email de prueba directo",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=["guessityet@gmail.com"],  # Tu email
+            fail_silently=False,
+        )
+        print(f"🔍 Resultado: {result}")
+        return HttpResponse(f"Email enviado. Resultado: {result}")
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        import traceback
+
+        print(traceback.format_exc())
+        return HttpResponse(f"Error: {str(e)}")

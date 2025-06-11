@@ -1,6 +1,7 @@
 # guessityet/urls.py - URLs completas con autenticación
 from django.urls import path
 from django.contrib.auth.views import LogoutView
+from django.contrib.auth import views as auth_views
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
@@ -41,8 +42,56 @@ urlpatterns = [
     path("cuentas/login/", views.CustomLoginView.as_view(), name="login"),
     path(
         "cuentas/logout/",
-        LogoutView.as_view(next_page="guessityet:daily_game"),
+        LogoutView.as_view(
+            next_page="guessityet:daily_game",
+            template_name="registration/logged_out.html",
+        ),
         name="logout",
+    ),
+    # ============================================================================
+    # URLS DE RESET DE CONTRASEÑA
+    # ============================================================================
+    path(
+        "cuentas/password_reset/",
+        auth_views.PasswordResetView.as_view(
+            template_name="registration/password_reset_form.html"
+        ),
+        name="password_reset",
+    ),
+    path(
+        "cuentas/password_reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="registration/password_reset_done.html"
+        ),
+        name="password_reset_done",
+    ),
+    path(
+        "cuentas/reset/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="registration/password_reset_confirm.html"
+        ),
+        name="password_reset_confirm",
+    ),
+    path(
+        "cuentas/reset/done/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="registration/password_reset_complete.html"
+        ),
+        name="password_reset_complete",
+    ),
+    path(
+        "cuentas/password_change/",
+        auth_views.PasswordChangeView.as_view(
+            template_name="registration/password_change_form.html"
+        ),
+        name="password_change",
+    ),
+    path(
+        "cuentas/password_change/done/",
+        auth_views.PasswordChangeDoneView.as_view(
+            template_name="registration/password_change_done.html"
+        ),
+        name="password_change_done",
     ),
     # ============================================================================
     # URLS DE PERFIL DE USUARIO
@@ -100,4 +149,6 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="guessityet:schema"),
         name="redoc",
     ),
+    # TODO: Borrar cuando se termine
+    path("test-email-direct/", views.test_email_direct, name="test_email_direct"),
 ]
