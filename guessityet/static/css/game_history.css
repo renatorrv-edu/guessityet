@@ -804,7 +804,8 @@
 /* Fila de cada juego en formato moderno */
 .game-history-row {
     display: grid;
-    grid-template-columns: 150px 1fr 200px 120px;
+    grid-template-columns: 150px 1fr 250px 100px;
+    gap: 2rem;
     align-items: center;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border-subtle);

@@ -14,10 +14,10 @@
     --bg-surface-variant: #383B3D; /* Variante para elementos especiales */
 
     /* Colores de estado - más vibrantes y definidos */
-    --success-color: #00E676;    /* Verde brillante para éxito */
-    --warning-color: #FFB74D;    /* Naranja suave para advertencias */
-    --error-color: #FF5252;      /* Rojo vibrante para errores */
-    --info-color: #448AFF;       /* Azul brillante para información */
+    --success-color: #2E7D32;    /* Verde oscuro como en la segunda imagen */
+    --warning-color: #F9A825;    /* Naranja/amarillo más oscuro para mejor legibilidad */
+    --error-color: #FF5252;      /* Rojo mantenerlo igual */
+    --info-color: #448AFF;       /* Azul mantenerlo igual */
 
     /* Texto - más blanco pero no puro */
     --text-primary: #F5F5F5;     /* Blanco humo para texto principal */
