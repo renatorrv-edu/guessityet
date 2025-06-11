@@ -149,6 +149,4 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="guessityet:schema"),
         name="redoc",
     ),
-    # TODO: Borrar cuando se termine
-    path("test-email-direct/", views.test_email_direct, name="test_email_direct"),
 ]
