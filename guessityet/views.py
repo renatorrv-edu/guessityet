@@ -104,13 +104,13 @@ class DailyGameView(TemplateView):
 
 
 class GameHistoryView(ListView):
-    """Vista del historial de juegos diarios - Simplificada"""
+    """Vista del historial de juegos diarios - Mejorada para mostrar progreso detallado"""
 
     model = DailyGame
     template_name = "game/game_history.html"
     context_object_name = "daily_games"
     paginate_by = 12
-    ordering = ["-date"]
+    ordering = ["-date"]  # Orden inverso (más recientes primero)
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("game")
@@ -124,22 +124,28 @@ class GameHistoryView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        # Calcular el número de juego para cada elemento (orden inverso)
+        total_games = self.get_queryset().count()
+
         # Solo calcular datos para usuarios autenticados
         if self.request.user.is_authenticated:
             # Obtener intentos del usuario para los juegos en la página actual
             daily_game_ids = [dg.id for dg in context["daily_games"]]
             user_attempts = UserGameAttempt.objects.filter(
                 user=self.request.user, daily_game_id__in=daily_game_ids
-            ).values("daily_game_id", "success", "attempts_used")
+            ).select_related("daily_game")
 
             # Crear diccionario para lookup rápido
             attempts_dict = {
-                attempt["daily_game_id"]: attempt for attempt in user_attempts
+                attempt.daily_game_id: attempt for attempt in user_attempts
             }
 
-            # Añadir info de completado a cada juego
-            for daily_game in context["daily_games"]:
+            # Enriquecer cada juego con información detallada
+            for idx, daily_game in enumerate(context["daily_games"]):
                 daily_game.user_attempt = attempts_dict.get(daily_game.id)
+                daily_game.game_number = total_games - (
+                    (context["page_obj"].number - 1) * self.paginate_by + idx
+                )
 
             # Calcular estadísticas del usuario para mostrar en el template
             all_user_attempts = UserGameAttempt.objects.filter(user=self.request.user)
@@ -147,16 +153,18 @@ class GameHistoryView(ListView):
             total_won = all_user_attempts.filter(success=True).count()
             win_rate = (total_won / total_played * 100) if total_played > 0 else 0
 
-            # Agregar estadísticas al contexto
             context["user_stats"] = {
                 "played": total_played,
                 "won": total_won,
                 "win_rate": round(win_rate, 1),
             }
         else:
-            # Para usuarios no autenticados, no hay user_attempt ni estadísticas
-            for daily_game in context["daily_games"]:
+            # Para usuarios no autenticados, solo números y fechas
+            for idx, daily_game in enumerate(context["daily_games"]):
                 daily_game.user_attempt = None
+                daily_game.game_number = total_games - (
+                    (context["page_obj"].number - 1) * self.paginate_by + idx
+                )
 
             context["user_stats"] = {
                 "played": 0,
@@ -164,7 +172,7 @@ class GameHistoryView(ListView):
                 "win_rate": 0,
             }
 
-        context["total_games"] = self.get_queryset().count()
+        context["total_games"] = total_games
         return context
 
 
@@ -290,54 +298,64 @@ class AboutView(TemplateView):
 # ============================================================================
 
 
+class CustomLoginView(LoginView):
+    """Vista de login personalizada"""
+
+    template_name = "registration/login.html"
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        return reverse_lazy("guessityet:daily_game")
+
+
 class CustomRegisterView(CreateView):
-    """Vista de registro personalizada con confirmación por email"""
+    """Vista de registro personalizada con confirmación de email"""
 
     form_class = CustomUserCreationForm
     template_name = "registration/register.html"
-    # CORREGIR ESTA LÍNEA:
     success_url = reverse_lazy("guessityet:registration_complete")
 
     def form_valid(self, form):
-        # Crear usuario pero marcarlo como inactivo
         response = super().form_valid(form)
-        user = self.object
 
-        # El usuario está inactivo hasta confirmar email
+        # El usuario se crea pero no se activa hasta confirmar email
+        user = self.object
         user.is_active = False
         user.save()
 
         # Crear perfil de usuario
-        profile, created = UserProfile.objects.get_or_create(
-            user=user, defaults={"email_confirmed": False}
-        )
-
-        # Crear token de confirmación
-        token = EmailConfirmationToken.objects.create(user=user)
+        UserProfile.objects.get_or_create(user=user)
 
         # Enviar email de confirmación
-        email_sent = EmailService.send_confirmation_email(user, token)
+        email_service = EmailService()
+        email_service.send_confirmation_email(user, self.request)
 
-        if email_sent:
-            messages.success(
-                self.request,
-                f"¡Cuenta creada para {user.username}! "
-                f"Revisa tu email {user.email} para confirmar tu cuenta.",
-            )
-        else:
-            messages.warning(
-                self.request,
-                f"Cuenta creada pero hubo un problema enviando el email de confirmación. "
-                f"Puedes solicitar un reenvío desde la página de login.",
-            )
+        messages.success(
+            self.request,
+            f"Te hemos enviado un email de confirmación a {user.email}. "
+            f"Por favor, revisa tu bandeja de entrada y spam.",
+        )
 
         return response
 
-    def dispatch(self, request, *args, **kwargs):
-        # Redirigir si ya está autenticado
-        if request.user.is_authenticated:
-            return redirect("guessityet:daily_game")
-        return super().dispatch(request, *args, **kwargs)
+    def form_invalid(self, form):
+        # Verificar si el email ya existe pero no está confirmado
+        email = form.cleaned_data.get("email")
+        if email:
+            try:
+                user = User.objects.get(email=email)
+                if not user.is_active:
+                    messages.warning(
+                        self.request,
+                        f"Ya existe una cuenta con este email que no ha sido confirmada. "
+                        f"Revisa tu email {user.email} o solicita un reenvío.",
+                    )
+                    return redirect("login")
+
+            except User.DoesNotExist:
+                pass
+
+        return super().form_invalid(form)
 
 
 class RegistrationCompleteView(TemplateView):
@@ -347,62 +365,43 @@ class RegistrationCompleteView(TemplateView):
 
 
 class ConfirmEmailView(View):
-    """Vista para confirmar email con token"""
+    """Vista para confirmar el email del usuario"""
 
-    def get(self, request, token):
+    def get(self, request, token, *args, **kwargs):
         try:
-            # Buscar token válido
-            confirmation_token = get_object_or_404(EmailConfirmationToken, token=token)
+            email_token = get_object_or_404(EmailConfirmationToken, token=token)
 
-            # Verificar si el token es válido
-            if not confirmation_token.is_valid():
-                if confirmation_token.is_expired():
-                    messages.error(
-                        request,
-                        "Este enlace de confirmación ha expirado. "
-                        "Puedes solicitar un nuevo enlace desde la página de login.",
-                    )
-                else:
+            if not email_token.is_valid():
+                if email_token.is_used:
                     messages.error(
                         request, "Este enlace de confirmación ya ha sido utilizado."
                     )
+                else:
+                    messages.error(request, "Este enlace de confirmación ha expirado.")
                 return redirect("login")
 
-            # Confirmar usuario
-            user = confirmation_token.user
+            # Activar usuario
+            user = email_token.user
             user.is_active = True
             user.save()
 
-            # Marcar email como confirmado en el perfil
-            if hasattr(user, "profile"):
-                user.profile.confirm_email()
-
             # Marcar token como usado
-            confirmation_token.is_used = True
-            confirmation_token.save()
+            email_token.is_used = True
+            email_token.save()
 
-            # Enviar email de bienvenida
-            EmailService.send_welcome_email(user)
-
-            # Auto-login del usuario
+            # Login automático
             login(request, user)
 
             messages.success(
                 request,
-                f"¡Tu cuenta ha sido confirmada exitosamente! "
-                f"Bienvenido a Guess It Yet?, {user.username}.",
+                f"¡Bienvenido {user.username}! Tu cuenta ha sido confirmada exitosamente.",
             )
-
-            logger.info(f"Usuario {user.username} confirmó su email exitosamente")
-
             return redirect("guessityet:daily_game")
 
         except Exception as e:
-            logger.error(f"Error en confirmación de email: {str(e)}")
+            logger.error(f"Error confirmando email: {e}")
             messages.error(
-                request,
-                "Hubo un error procesando tu confirmación. "
-                "Por favor, contacta al soporte.",
+                request, "Hubo un error confirmando tu email. Inténtalo nuevamente."
             )
             return redirect("login")
 
@@ -410,78 +409,38 @@ class ConfirmEmailView(View):
 class ResendConfirmationView(View):
     """Vista para reenviar email de confirmación"""
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         email = request.POST.get("email", "").strip()
 
         if not email:
-            messages.error(request, "Por favor, ingresa tu email.")
+            messages.error(request, "Email requerido.")
             return redirect("login")
 
         try:
-            # Buscar usuario por email
-            user = User.objects.get(email=email, is_active=False)
+            user = User.objects.get(email=email)
 
-            # Verificar que el usuario necesita confirmación
-            if hasattr(user, "profile") and user.profile.email_confirmed:
-                messages.info(
-                    request,
-                    "Este email ya está confirmado. Puedes iniciar sesión normalmente.",
-                )
+            if user.is_active:
+                messages.info(request, "Esta cuenta ya está activada.")
                 return redirect("login")
 
             # Reenviar email de confirmación
-            success = EmailService.resend_confirmation_email(user)
+            email_service = EmailService()
+            email_service.send_confirmation_email(user, request)
 
-            if success:
-                messages.success(
-                    request,
-                    f"Email de confirmación reenviado a {email}. "
-                    f"Revisa tu bandeja de entrada y spam.",
-                )
-            else:
-                messages.error(
-                    request,
-                    "Hubo un problema reenviando el email. "
-                    "Inténtalo de nuevo más tarde.",
-                )
+            messages.success(
+                request,
+                f"Hemos reenviado el email de confirmación a {email}. "
+                f"Revisa tu bandeja de entrada y spam.",
+            )
 
         except User.DoesNotExist:
-            # No revelamos si el email existe o no por seguridad
-            messages.info(
+            # Por seguridad, no revelamos si el email existe o no
+            messages.success(
                 request,
-                "Si existe una cuenta con ese email que necesite confirmación, "
-                "recibirás un nuevo enlace de confirmación.",
+                f"Si existe una cuenta con este email, recibirás un enlace de confirmación.",
             )
 
         return redirect("login")
-
-
-class CustomLoginView(LoginView):
-    """Vista de login personalizada que verifica confirmación de email"""
-
-    template_name = "registration/login.html"
-
-    def form_invalid(self, form):
-        # Verificar si es un problema de usuario no activado
-        username = form.cleaned_data.get("username")
-
-        if username:
-            try:
-                user = User.objects.get(username=username, is_active=False)
-
-                # Verificar si es por falta de confirmación de email
-                if hasattr(user, "profile") and not user.profile.email_confirmed:
-                    messages.warning(
-                        self.request,
-                        f"Tu cuenta aún no está confirmada. "
-                        f"Revisa tu email {user.email} o solicita un reenvío.",
-                    )
-                    return redirect("login")
-
-            except User.DoesNotExist:
-                pass
-
-        return super().form_invalid(form)
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -563,7 +522,6 @@ class UpdateProfileView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         # Aquí implementarías campos personalizados del perfil
         # Por ejemplo: avatar, configuraciones, etc.
-
         user = request.user
         profile = user.profile
 
@@ -585,272 +543,7 @@ class UpdateProfileView(LoginRequiredMixin, View):
 
 
 # ============================================================================
-# VISTAS DE TESTING Y DEBUG (solo en desarrollo)
-# ============================================================================
-
-
-class GenerateTestGameView(View):
-    """Generar un nuevo juego de prueba usando RAWG"""
-
-    def get(self, request, *args, **kwargs):
-        print("Forzando generación de nuevo juego de prueba...")
-
-        request.session.flush()
-
-        rawg_service = RAWGService()
-        game = rawg_service.select_random_game()
-
-        if game:
-            print(f"Nuevo juego generado: {game.title}")
-            request.session["current_test_game_id"] = game.id
-            request.session.modified = True
-            return HttpResponseRedirect(reverse("guessityet:test_rawg_view"))
-        else:
-            print("No se pudo generar juego")
-            return render(
-                request,
-                "game/no_game_available.html",
-                {"error": "No se pudo generar un juego de prueba"},
-            )
-
-
-class GenerateTestGameIGDBView(View):
-    """Generar un nuevo juego de prueba usando IGDB"""
-
-    def get(self, request, *args, **kwargs):
-        print("Forzando generación de nuevo juego de prueba con IGDB...")
-
-        request.session.flush()
-
-        igdb_service = IGDBService()
-        game = igdb_service.select_random_game()
-
-        if game:
-            print(f"Nuevo juego generado con IGDB: {game.title}")
-            request.session["current_test_game_id"] = game.id
-            request.session.modified = True
-            return HttpResponseRedirect(reverse("guessityet:test_igdb_view"))
-        else:
-            print("No se pudo generar juego con IGDB")
-            return render(
-                request,
-                "game/no_game_available.html",
-                {"error": "No se pudo generar un juego de prueba con IGDB"},
-            )
-
-
-class TestRAWGView(TemplateView):
-    """Vista de prueba RAWG"""
-
-    template_name = "test_random_game.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        rawg_service = RAWGService()
-        game = rawg_service.select_random_game()
-
-        if game:
-            context["game"] = game
-        else:
-            context["error"] = "No se pudo obtener un juego"
-            self.template_name = "game/no_game_available.html"
-
-        return context
-
-
-class TestIGDBView(TemplateView):
-    """Vista de prueba para IGDB"""
-
-    template_name = "test_random_game.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        igdb_service = IGDBService()
-        game = igdb_service.select_random_game()
-
-        if game:
-            context.update({"game": game, "service": "IGDB"})
-        else:
-            context["error"] = "No se pudo obtener un juego con IGDB"
-            self.template_name = "game/no_game_available.html"
-
-        return context
-
-
-class CompareServicesView(TemplateView):
-    """Vista para comparar resultados de RAWG vs IGDB"""
-
-    template_name = "test_services_comparison.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        try:
-            rawg_service = RAWGService()
-            igdb_service = IGDBService()
-
-            # Generar juego con cada servicio
-            rawg_game = rawg_service.select_random_game()
-            igdb_game = igdb_service.select_random_game()
-
-            context.update(
-                {
-                    "rawg_game": rawg_game,
-                    "igdb_game": igdb_game,
-                    "comparison_data": {
-                        "rawg_available": rawg_game is not None,
-                        "igdb_available": igdb_game is not None,
-                        "rawg_franchises": (
-                            rawg_game.franchise_name if rawg_game else None
-                        ),
-                        "igdb_franchises": (
-                            igdb_game.franchise_name if igdb_game else None
-                        ),
-                    },
-                }
-            )
-        except Exception as e:
-            context["error"] = f"Error comparando servicios: {str(e)}"
-            self.template_name = "game/no_game_available.html"
-
-        return context
-
-
-class DebugFranchiseView(TemplateView):
-    """Vista temporal para probar franquicias de RAWG"""
-
-    def get(self, request, *args, **kwargs):
-        test_games = [
-            {"name": "Call of Duty: Modern Warfare", "id": 4200},
-            {"name": "Assassin's Creed", "id": 4729},
-            {"name": "Grand Theft Auto V", "id": 3498},
-            {"name": "Metal Gear Solid V", "id": 3206},
-            {"name": "Layers of Fear", "id": 4386},
-            {"name": "Halo: Combat Evolved", "id": 28448},
-        ]
-
-        rawg_service = RAWGService()
-        results = []
-
-        for test_game in test_games:
-            print(f"\nProbando: {test_game['name']}")
-
-            game_details = rawg_service.get_game_details(test_game["id"])
-
-            if game_details:
-                franchise_name, franchise_slug = rawg_service.extract_franchise_info(
-                    game_details
-                )
-
-                result = {
-                    "name": test_game["name"],
-                    "id": test_game["id"],
-                    "franchise_name": franchise_name,
-                    "franchise_slug": franchise_slug,
-                    "has_franchise_field": "franchise" in game_details,
-                    "franchise_field_value": game_details.get("franchise"),
-                    "sample_tags": [
-                        tag.get("name") for tag in game_details.get("tags", [])[:5]
-                    ],
-                }
-
-                results.append(result)
-                print(f"Resultado: {franchise_name} ({franchise_slug})")
-            else:
-                print(f"No se pudieron obtener detalles")
-
-        html = """
-        <!DOCTYPE html>
-        <html>
-        <head><title>Debug Franquicia RAWG</title></head>
-        <body>
-        <h1>Test de Franquicias RAWG.io</h1>
-        """
-
-        for result in results:
-            html += f"""
-            <div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
-                <h3>{result['name']} (ID: {result['id']})</h3>
-                <p><strong>Franquicia detectada:</strong> {result['franchise_name'] or 'Ninguna'}</p>
-                <p><strong>Slug:</strong> {result['franchise_slug'] or 'Ninguno'}</p>
-                <p><strong>Tiene campo 'franchise':</strong> {result['has_franchise_field']}</p>
-                <p><strong>Valor del campo 'franchise':</strong> {result['franchise_field_value']}</p>
-                <p><strong>Tags de ejemplo:</strong> {', '.join(result['sample_tags'])}</p>
-            </div>
-            """
-
-        html += "</body></html>"
-
-        return HttpResponse(html)
-
-
-class DebugIGDBAuthView(TemplateView):
-    """Vista para debuggear autenticación IGDB"""
-
-    def get(self, request, *args, **kwargs):
-        try:
-            igdb_service = IGDBService()
-
-            # Probar autenticación
-            token = igdb_service.get_access_token()
-
-            if token:
-                # Probar búsqueda simple
-                search_results = igdb_service.search_games("Mario", limit=3)
-
-                html = f"""
-                <!DOCTYPE html>
-                <html>
-                <head><title>Debug IGDB</title></head>
-                <body>
-                <h1>Debug IGDB Authentication</h1>
-                <p><strong>Token obtenido:</strong> ✅ Sí (oculto por seguridad)</p>
-                <p><strong>Búsqueda funciona:</strong> {'✅ Sí' if search_results else '❌ No'}</p>
-                <h2>Resultados de búsqueda "Mario":</h2>
-                <ul>
-                """
-
-                for game in search_results or []:
-                    html += f"<li>{game.get('name', 'N/A')} (ID: {game.get('id', 'N/A')})</li>"
-
-                html += """
-                </ul>
-                </body>
-                </html>
-                """
-            else:
-                html = """
-                <!DOCTYPE html>
-                <html>
-                <head><title>Debug IGDB</title></head>
-                <body>
-                <h1>Debug IGDB Authentication</h1>
-                <p><strong>Token obtenido:</strong> ❌ No</p>
-                <p>Verificar credenciales IGDB_CLIENT_ID e IGDB_CLIENT_SECRET</p>
-                </body>
-                </html>
-                """
-
-            return HttpResponse(html)
-
-        except Exception as e:
-            html = f"""
-            <!DOCTYPE html>
-            <html>
-            <head><title>Debug IGDB Error</title></head>
-            <body>
-            <h1>Error en Debug IGDB</h1>
-            <p><strong>Error:</strong> {str(e)}</p>
-            </body>
-            </html>
-            """
-            return HttpResponse(html)
-
-
-# ============================================================================
-# VISTAS AJAX (mantener como function-based para simplicidad)
+# AJAX ENDPOINTS PARA EL JUEGO
 # ============================================================================
 
 
@@ -973,7 +666,7 @@ def skip_turn(request):
 
 
 # ============================================================================
-# FUNCIONES DE UTILIDAD (conservar como están)
+# FUNCIONES DE UTILIDAD
 # ============================================================================
 
 
@@ -1045,7 +738,7 @@ def process_guess(
                 ):
                     franchise_match = True
                     franchise_name = game.franchise_name
-                    print(f"¡Franquicia correcta!: {franchise_name}")
+                    print(f"¡Franquicia correcta: {franchise_name}")
                 else:
                     print(
                         f"Franquicias diferentes: '{game.franchise_name}' vs '{guessed_franchise_name}'"
@@ -1085,7 +778,20 @@ def process_guess(
 
     # Guardar estadísticas del usuario si está autenticado
     if request.user.is_authenticated:
-        save_user_attempt(request, game, is_correct, game_state["current_attempt"] - 1)
+        # Determinar si es juego de hoy o histórico
+        today = timezone.now().date()
+        try:
+            daily_game = DailyGame.objects.get(date=today, game=game)
+            save_user_attempt(
+                request, daily_game, is_correct, game_state["current_attempt"] - 1
+            )
+        except DailyGame.DoesNotExist:
+            # Es un juego histórico, buscar el DailyGame correspondiente
+            daily_game = DailyGame.objects.filter(game=game).first()
+            if daily_game:
+                save_historical_user_attempt(
+                    request, daily_game, is_correct, game_state["current_attempt"] - 1
+                )
 
     return {
         "success": True,
@@ -1100,12 +806,12 @@ def process_guess(
     }
 
 
-def save_user_attempt(request, game, success, attempts_used):
-    """Guardar intento del usuario en la base de datos"""
+def save_user_attempt(request, daily_game, success, attempts_used):
+    """Guardar intento del usuario en la base de datos con detalles completos"""
     try:
-        # Obtener el DailyGame actual
-        today = timezone.now().date()
-        daily_game = DailyGame.objects.get(date=today, game=game)
+        # Obtener los detalles de los intentos desde la sesión
+        game_state = request.session.get("game_state", {})
+        attempts_data = game_state.get("attempts", [])
 
         # Crear o actualizar el intento del usuario
         user_attempt, created = UserGameAttempt.objects.update_or_create(
@@ -1115,11 +821,14 @@ def save_user_attempt(request, game, success, attempts_used):
                 "success": success,
                 "attempts_used": attempts_used,
                 "completed_at": timezone.now() if success else None,
+                "attempts_data": attempts_data,  # Guardar todos los detalles
             },
         )
 
         # Actualizar estadísticas del perfil solo si es un nuevo intento exitoso
-        if success and created:
+        # y es el juego de hoy (no histórico)
+        today = timezone.now().date()
+        if success and created and daily_game.date == today:
             profile = request.user.profile
             profile.games_won += 1
             if attempts_used == 1:
@@ -1132,10 +841,42 @@ def save_user_attempt(request, game, success, attempts_used):
 
             profile.save()
 
-    except DailyGame.DoesNotExist:
-        print(f"No se encontró DailyGame para el juego {game.title}")
+        print(
+            f"Intento guardado para {request.user.username}: {success} en {attempts_used} intentos"
+        )
+        print(f"Detalles de intentos: {attempts_data}")
+
     except Exception as e:
         print(f"Error guardando intento del usuario: {e}")
+
+
+def save_historical_user_attempt(request, daily_game, success, attempts_used):
+    """Guardar intento del usuario para juegos históricos con detalles completos"""
+    try:
+        # Obtener los detalles de los intentos desde la sesión
+        game_state = request.session.get("game_state", {})
+        attempts_data = game_state.get("attempts", [])
+
+        # Crear o actualizar el intento del usuario
+        user_attempt, created = UserGameAttempt.objects.update_or_create(
+            user=request.user,
+            daily_game=daily_game,
+            defaults={
+                "success": success,
+                "attempts_used": attempts_used,
+                "completed_at": timezone.now() if success else None,
+                "attempts_data": attempts_data,  # Guardar todos los detalles
+            },
+        )
+
+        # Para juegos históricos, no actualizamos estadísticas de perfil
+        print(
+            f"Intento histórico guardado para {request.user.username}: {success} en {attempts_used} intentos"
+        )
+        print(f"Detalles de intentos: {attempts_data}")
+
+    except Exception as e:
+        print(f"Error guardando intento histórico del usuario: {e}")
 
 
 def calculate_user_streak(user):
@@ -1156,66 +897,189 @@ def calculate_user_streak(user):
     return current_streak
 
 
-def insert_spaces_in_compound_words(query):
-    """Insertar espacios en palabras compuestas comunes de videojuegos"""
-    patterns = [
-        (r"metalgear", "metal gear"),
-        (r"callofduty", "call of duty"),
-        (r"grandtheft", "grand theft"),
-        (r"assassinscreed", "assassins creed"),
-        (r"farcry", "far cry"),
-        (r"finalfantasy", "final fantasy"),
-        (r"godofwar", "god of war"),
-        (r"lastofus", "last of us"),
-        (r"masseffect", "mass effect"),
-        (r"deadspace", "dead space"),
-        (r"dragonage", "dragon age"),
-        (r"elderscrolls", "elder scrolls"),
-        (r"needforspeed", "need for speed"),
-        (r"tombraider", "tomb raider"),
-        (r"streetfighter", "street fighter"),
-        (r"mortalkombat", "mortal kombat"),
-        (r"supermario", "super mario"),
-        (r"donkeykong", "donkey kong"),
-        (r"halflife", "half life"),
-        (r"counterstrike", "counter strike"),
-        (r"teamfortress", "team fortress"),
-        (r"leftdead", "left dead"),
-        (r"gearsswar", "gears war"),
-    ]
+def is_similar_franchise(correct_franchise, guessed_franchise):
+    """Verificar si dos franquicias son similares usando palabras clave"""
+    if not correct_franchise or not guessed_franchise:
+        return False
 
-    query_lower = query.lower()
+    # Normalizar y dividir en palabras
+    correct_words = re.findall(r"\w+", correct_franchise.lower())
+    guessed_words = re.findall(r"\w+", guessed_franchise.lower())
 
-    for pattern, replacement in patterns:
-        if pattern in query_lower:
-            return re.sub(pattern, replacement, query_lower, flags=re.IGNORECASE)
+    # Palabras clave de franquicias comunes
+    franchise_words = set(correct_words + guessed_words)
 
-    return query
-
-
-def check_franchise_match(correct_title, guessed_title):
-    """Verificar si dos juegos pertenecen a la misma franquicia"""
-    franchise_words = [
-        "Call of Duty",
-        "Assassin's Creed",
-        "Grand Theft Auto",
-        "The Elder Scrolls",
-        "Fallout",
-        "FIFA",
-        "Madden",
-        "Metal Gear",
-        "Final Fantasy",
-        "Dragon Age",
-    ]
-
-    correct_lower = correct_title.lower()
-    guessed_lower = guessed_title.lower()
+    # Verificar coincidencias de palabras importantes
+    correct_lower = correct_franchise.lower()
+    guessed_lower = guessed_franchise.lower()
 
     for franchise in franchise_words:
         if franchise.lower() in correct_lower and franchise.lower() in guessed_lower:
             return True
 
     return False
+
+
+# ============================================================================
+# VISTAS DE TESTING Y DEBUG (solo en desarrollo)
+# ============================================================================
+
+
+class GenerateTestGameView(View):
+    """Generar un nuevo juego de prueba usando RAWG"""
+
+    def get(self, request, *args, **kwargs):
+        print("Forzando generación de nuevo juego de prueba...")
+
+        request.session.flush()
+
+        rawg_service = RAWGService()
+        game = rawg_service.select_random_game()
+
+        if game:
+            print(f"Nuevo juego generado: {game.title}")
+            request.session["current_test_game_id"] = game.id
+            request.session.modified = True
+            return HttpResponseRedirect(reverse("guessityet:test_rawg_view"))
+        else:
+            print("No se pudo generar juego")
+            return render(
+                request,
+                "game/no_game_available.html",
+                {"error": "No se pudo generar un juego de prueba"},
+            )
+
+
+class GenerateTestGameIGDBView(View):
+    """Generar un nuevo juego de prueba usando IGDB"""
+
+    def get(self, request, *args, **kwargs):
+        print("Forzando generación de nuevo juego de prueba con IGDB...")
+
+        request.session.flush()
+
+        igdb_service = IGDBService()
+        game = igdb_service.select_random_game()
+
+        if game:
+            print(f"Nuevo juego generado con IGDB: {game.title}")
+            request.session["current_test_game_id"] = game.id
+            request.session.modified = True
+            return HttpResponseRedirect(reverse("guessityet:test_igdb_view"))
+        else:
+            print("No se pudo generar juego con IGDB")
+            return render(
+                request,
+                "game/no_game_available.html",
+                {"error": "No se pudo generar un juego de prueba con IGDB"},
+            )
+
+
+class TestRAWGView(TemplateView):
+    """Vista de prueba RAWG"""
+
+    template_name = "test_random_game.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        rawg_service = RAWGService()
+        game = rawg_service.select_random_game()
+
+        if game:
+            context["game"] = game
+            context["screenshots"] = game.screenshot_set.all().order_by("difficulty")
+        else:
+            context["error"] = "No se pudo obtener juego"
+
+        return context
+
+
+class TestIGDBView(TemplateView):
+    """Vista de prueba IGDB"""
+
+    template_name = "test_random_game.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        igdb_service = IGDBService()
+        game = igdb_service.select_random_game()
+
+        if game:
+            context["game"] = game
+            context["screenshots"] = game.screenshot_set.all().order_by("difficulty")
+        else:
+            context["error"] = "No se pudo obtener juego con IGDB"
+
+        return context
+
+
+class CompareServicesView(TemplateView):
+    """Vista para comparar ambos servicios"""
+
+    template_name = "compare_services.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        rawg_service = RAWGService()
+        igdb_service = IGDBService()
+
+        rawg_game = rawg_service.select_random_game()
+        igdb_game = igdb_service.select_random_game()
+
+        context.update(
+            {
+                "rawg_game": rawg_game,
+                "igdb_game": igdb_game,
+                "rawg_screenshots": (
+                    rawg_game.screenshot_set.all().order_by("difficulty")
+                    if rawg_game
+                    else []
+                ),
+                "igdb_screenshots": (
+                    igdb_game.screenshot_set.all().order_by("difficulty")
+                    if igdb_game
+                    else []
+                ),
+            }
+        )
+
+        return context
+
+
+class DebugFranchiseView(TemplateView):
+    """Vista para debuggear franquicias"""
+
+    template_name = "debug_franchise.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Obtener juegos con franquicia para debugging
+        games_with_franchise = Game.objects.filter(
+            franchise_name__isnull=False
+        ).exclude(franchise_name="")[:10]
+
+        context["games"] = games_with_franchise
+        return context
+
+
+class DebugIGDBAuthView(View):
+    """Vista para debuggear autenticación IGDB"""
+
+    def get(self, request, *args, **kwargs):
+        igdb_service = IGDBService()
+        auth_status = igdb_service.test_authentication()
+
+        return JsonResponse(
+            {
+                "authenticated": auth_status["authenticated"],
+                "token_expires": auth_status.get("token_expires"),
+                "error": auth_status.get("error"),
+            }
+        )
 
 
 # ============================================================================

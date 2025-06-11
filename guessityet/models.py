@@ -121,6 +121,70 @@ class UserGameAttempt(models.Model):
     success = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
 
+    # Campo para guardar los detalles de todos los intentos
+    attempts_data = models.JSONField(default=list, blank=True)
+
+    def get_attempt_icons(self):
+        """Retorna una lista de iconos para mostrar en el historial"""
+        icons = []
+        max_attempts = 6
+
+        for i in range(1, max_attempts + 1):
+            # Buscar si existe un intento para este número
+            attempt_data = next(
+                (a for a in self.attempts_data if a.get("attempt") == i), None
+            )
+
+            if attempt_data:
+                if attempt_data.get("correct"):
+                    icons.append(
+                        {
+                            "icon": "fas fa-check",
+                            "class": "correct",
+                            "title": f"Acierto en intento {i}",
+                        }
+                    )
+                elif attempt_data.get("franchise_match"):
+                    icons.append(
+                        {
+                            "icon": "fas fa-star",
+                            "class": "franchise",
+                            "title": f"Franquicia correcta en intento {i}",
+                        }
+                    )
+                elif attempt_data.get("type") == "skipped":
+                    icons.append(
+                        {
+                            "icon": "fas fa-forward",
+                            "class": "skipped",
+                            "title": f"Turno {i} saltado",
+                        }
+                    )
+                else:
+                    icons.append(
+                        {
+                            "icon": "fas fa-times",
+                            "class": "wrong",
+                            "title": f"Fallo en intento {i}",
+                        }
+                    )
+            else:
+                # No hubo intento en este turno - mostrar como no alcanzado
+                icons.append(
+                    {
+                        "icon": "fas fa-question",
+                        "class": "not-reached",
+                        "title": f"Intento {i} no alcanzado",
+                    }
+                )
+
+        return icons
+
+    class Meta:
+        unique_together = ["user", "daily_game"]
+        verbose_name = "Intento de juego del usuario"
+        verbose_name_plural = "Intentos de juegos del usuario"
+
 
 class GameLobby(models.Model):
     """Lobbies multijugador"""
