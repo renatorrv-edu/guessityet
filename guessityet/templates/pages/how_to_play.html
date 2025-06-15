@@ -70,7 +70,7 @@
                     <div class="step-number">3</div>
                     <div class="step-content">
                         <h3>Envía tu respuesta</h3>
-                        <p>Selecciona el juego y confirma tu elección. Si no aciertas, podrás ver la siguiente captura.</p>
+                        <p>Selecciona el juego y confirma tu elección. Recibirás feedback inmediato sobre tu intento.</p>
                     </div>
                 </div>
             </div>
@@ -81,7 +81,117 @@
                     <div class="step-number">4</div>
                     <div class="step-content">
                         <h3>Repite o celebra</h3>
-                        <p>Si aciertas, ¡felicidades! Si no, sigue intentando con capturas más fáciles hasta agotarse los intentos.</p>
+                        <p>Si aciertas, ¡felicidades! Si no, continúa con la siguiente captura más fácil.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tipos de resultado -->
+    <section class="mb-5">
+        <h2 class="text-center mb-4">
+            <i class="fas fa-clipboard-check me-2"></i>
+            Tipos de Resultado
+        </h2>
+
+        <div class="row">
+            <!-- Acierto completo -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="result-icon mb-3">
+                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="text-success mb-3">¡Acierto Total!</h4>
+                        <p class="card-text mb-3">
+                            Cuando adivinas el juego exacto, ¡has ganado! El juego termina inmediatamente y
+                            se muestran los detalles completos del videojuego.
+                        </p>
+                        <div class="alert alert-success small mb-0">
+                            <strong>Resultado:</strong> Victoria instantánea. Se revelan todas las capturas
+                            y la información del juego.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acierto de franquicia -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="result-icon mb-3">
+                            <i class="fas fa-star text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="text-warning mb-3">¡Franquicia Correcta!</h4>
+                        <p class="card-text mb-3">
+                            Si el juego que eliges pertenece a la misma franquicia que el correcto,
+                            obtienes puntos parciales pero el juego continúa.
+                        </p>
+                        <div class="alert alert-warning small mb-0">
+                            <strong>Resultado:</strong> Se muestra la franquicia correcta como pista
+                            y puedes seguir intentando.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fallo -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="result-icon mb-3">
+                            <i class="fas fa-times-circle text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="text-danger mb-3">Intento Fallido</h4>
+                        <p class="card-text mb-3">
+                            Cuando tu respuesta no coincide ni con el juego ni con su franquicia,
+                            se revela la siguiente captura más fácil.
+                        </p>
+                        <div class="alert alert-danger small mb-0">
+                            <strong>Resultado:</strong> Se desbloquea la siguiente imagen y
+                            tienes otro intento disponible.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ejemplos visuales -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="text-center mb-4">
+                            <i class="fas fa-eye me-2"></i>
+                            Ejemplo de Historial de Intentos
+                        </h5>
+                        <div class="d-flex justify-content-center align-items-center flex-wrap gap-3">
+                            <div class="attempt-demo">
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <small class="text-muted">Acierto</small>
+                            </div>
+                            <div class="attempt-demo">
+                                <span class="badge bg-warning me-2">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                                <small class="text-muted">Franquicia</small>
+                            </div>
+                            <div class="attempt-demo">
+                                <span class="badge bg-danger me-2">
+                                    <i class="fas fa-times"></i>
+                                </span>
+                                <small class="text-muted">Fallo</small>
+                            </div>
+                            <div class="attempt-demo">
+                                <span class="badge bg-secondary me-2">
+                                    <i class="fas fa-forward"></i>
+                                </span>
+                                <small class="text-muted">Saltado</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,12 +241,62 @@
                             usando solo la captura más difícil. Es la máxima demostración de conocimiento sobre videojuegos.
                         </p>
                         <div class="text-center">
-                            <span class="badge bg-gradient text-white px-3 py-2" style="background: linear-gradient(45deg, #ffd700, #ffed4e);">
+                            <span class="badge text-dark px-3 py-2 fw-bold" style="background: linear-gradient(45deg, #ffd700, #ffed4e); border: 2px solid #f39c12;">
                                 <i class="fas fa-star me-1"></i>
                                 ¡Guessed It!
                             </span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Condiciones de finalización -->
+    <section class="mb-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h3 class="text-center mb-4">
+                    <i class="fas fa-flag-checkered me-2"></i>
+                    ¿Cuándo Termina el Juego?
+                </h3>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="mb-1">Victoria</h5>
+                                <p class="text-muted mb-0">
+                                    Cuando adivinas el juego exacto en cualquiera de los 6 intentos disponibles.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="mb-1">Derrota</h5>
+                                <p class="text-muted mb-0">
+                                    Cuando agotes los 6 intentos sin haber adivinado el juego correcto.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <strong>Recuerda:</strong> Los aciertos de franquicia no terminan el juego, pero te dan una pista valiosa para seguir intentando.
                 </div>
             </div>
         </div>
@@ -176,50 +336,26 @@
                                     <i class="fas fa-share me-3 mt-1"></i>
                                     <div>
                                         <h5 class="mb-1">Comparte resultados</h5>
-                                        <p class="mb-0 opacity-90">Presume tus Guessed It! y reta a tus amigos a superarte.</p>
+                                        <p class="mb-0 opacity-90">Presume tus Guessed It! y desafía a tus amigos a superarte.</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="d-flex align-items-start">
-                                    <i class="fas fa-trophy me-3 mt-1"></i>
+                                    <i class="fas fa-star me-3 mt-1"></i>
                                     <div>
-                                        <h5 class="mb-1">Logros y rachas</h5>
-                                        <p class="mb-0 opacity-90">Mantén tu racha de victorias y desbloquea logros especiales.</p>
+                                        <h5 class="mb-1">Logros especiales</h5>
+                                        <p class="mb-0 opacity-90">Desbloquea medallas y títulos únicos por tus hazañas gaming.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-4 text-center">
-                        <i class="fas fa-user-circle" style="font-size: 8rem; opacity: 0.3;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Retar a amigos -->
-    <section class="mb-5">
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <h3 class="mb-3">
-                            <i class="fas fa-users me-2 text-primary"></i>
-                            Reta a tus Amigos
-                        </h3>
-                        <p class="mb-4">
-                            Después de completar el juego diario, puedes compartir tus resultados con amigos registrados.
-                            Envíales un mensaje diciéndoles en cuántos intentos lo resolviste y desafíalos a que lo intenten superar.
-                        </p>
-                        <div class="bg-light rounded p-3 mb-4">
-                            <strong>Ejemplo de mensaje:</strong><br>
-                            <em>"¡Conseguí un Guessed It! en el juego de hoy! 🎮⭐ ¿Puedes superarme?"</em>
-                        </div>
-                        <p class="text-muted small mb-0">
-                            Nota: Solo los usuarios registrados pueden recibir y enviar desafíos.
-                        </p>
+                        <a href="{% url 'guessityet:register' %}" class="btn btn-light btn-lg px-4">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Únete Gratis
+                        </a>
                     </div>
                 </div>
             </div>
@@ -259,38 +395,92 @@
                     <div class="card-body text-center">
                         <i class="fas fa-calendar text-primary mb-3" style="font-size: 2rem;"></i>
                         <h5>Juega a diario</h5>
-                        <p class="card-text">La práctica hace al maestro. Cada día hay un nuevo desafío esperándote.</p>
+                        <p class="card-text">La práctica hace al maestro. Cada día es una nueva oportunidad de mejorar.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consejos adicionales -->
+        <div class="row mt-4">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="mb-3">
+                            <i class="fas fa-brain me-2"></i>
+                            Estrategias Avanzadas
+                        </h5>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Piensa en franquicias:</strong> Si reconoces el estilo pero no el juego exacto, intenta con otros títulos de la saga.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Analiza la época:</strong> Los gráficos pueden darte pistas sobre la generación del juego.
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Busca elementos únicos:</strong> Personajes, logos, interfaces distintivas son clave.
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>No te rindas:</strong> Incluso los fallos de franquicia te dan información valiosa.
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Call to action -->
-    <section class="text-center mb-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-sm bg-primary text-white">
-                    <div class="card-body p-4">
-                        <h3 class="mb-3">¿Listo para el Desafío?</h3>
-                        <p class="mb-4">¡Pon a prueba tus conocimientos sobre videojuegos y conviértete en un experto de GuessItYet!</p>
-                        <div class="d-flex gap-3 justify-content-center flex-wrap">
-                            <a href="{% url 'guessityet:daily_game' %}" class="btn btn-outline-light btn-lg text-decoration-none">
-                                <i class="fas fa-play me-2"></i>
-                                Jugar Ahora
-                            </a>
-                            {% if not user.is_authenticated %}
-                            <a href="{% url 'guessityet:register' %}" class="btn btn-outline-light btn-lg text-decoration-none">
-                                <i class="fas fa-user-plus me-2"></i>
-                                Registrarse
-                            </a>
-                            {% endif %}
+    <!-- Comparte y desafía -->
+    <section class="mb-5">
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            <i class="fas fa-share-alt me-2 text-info"></i>
+                            Comparte tus Victorias
+                        </h3>
+                        <p class="card-text mb-3">
+                            Cuando completes un juego, puedes compartir tu resultado con amigos y retarlos a que lo superen.
+                        </p>
+                        <div class="bg-light rounded p-3 mb-3">
+                            <strong>Ejemplo de mensaje:</strong><br>
+                            <em>"¡Conseguí un Guessed It! en el juego de hoy! 🎮⭐ ¿Puedes superarme?"</em>
                         </div>
+                        <p class="text-muted small mb-0">
+                            Los usuarios registrados pueden crear enlaces personalizados para desafiar a otros.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            <i class="fas fa-calendar-day me-2 text-warning"></i>
+                            Juego Diario
+                        </h3>
+                        <p class="card-text mb-3">
+                            Cada día hay un nuevo videojuego que adivinar. Todos los jugadores enfrentan el mismo desafío.
+                        </p>
+                        <div class="alert alert-warning small">
+                            <i class="fas fa-clock me-1"></i>
+                            <strong>Horario:</strong> Los nuevos juegos se publican cada día a las 00:00 UTC.
+                        </div>
+                        <p class="text-muted small mb-0">
+                            También puedes jugar juegos de días anteriores en la sección de historial.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+
         </div>
     </div>
 </div>
