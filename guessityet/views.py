@@ -444,7 +444,7 @@ class ResendConfirmationView(View):
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
-    """Vista del perfil de usuario"""
+    """Vista del perfil de usuario mejorada"""
 
     template_name = "accounts/profile.html"
     login_url = "/cuentas/login/"
@@ -456,17 +456,20 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
         # Obtener estadísticas del usuario
         user_attempts = UserGameAttempt.objects.filter(user=self.request.user)
+
+        # Últimas 10 partidas jugadas (con más información)
         recent_games = user_attempts.select_related("daily_game__game").order_by(
             "-completed_at"
-        )[:5]
+        )[:10]
 
         # Calcular estadísticas avanzadas
         total_games = user_attempts.count()
         won_games = user_attempts.filter(success=True).count()
         guessed_it_games = user_attempts.filter(success=True, attempts_used=1).count()
 
-        # Calcular racha actual
+        # Calcular racha actual y máxima
         current_streak = self.calculate_current_streak()
+        max_streak = profile.max_streak
 
         # Estadísticas por número de intentos
         attempts_stats = {}
@@ -475,10 +478,21 @@ class ProfileView(LoginRequiredMixin, TemplateView):
                 success=True, attempts_used=i
             ).count()
 
+        # Calcular porcentajes
         win_rate = (won_games / total_games * 100) if total_games > 0 else 0
         guessed_it_rate = (
             (guessed_it_games / total_games * 100) if total_games > 0 else 0
         )
+
+        # Obtener el mejor y peor rendimiento por desarrollador/género
+        performance_by_developer = self.get_performance_by_developer()
+        performance_by_genre = self.get_performance_by_genre()
+
+        # Estadísticas mensuales
+        monthly_stats = self.get_monthly_stats()
+
+        # Actividad reciente (últimos 30 días)
+        recent_activity = self.get_recent_activity()
 
         context.update(
             {
@@ -489,8 +503,13 @@ class ProfileView(LoginRequiredMixin, TemplateView):
                 "win_rate": round(win_rate, 1),
                 "guessed_it_rate": round(guessed_it_rate, 1),
                 "current_streak": current_streak,
+                "max_streak": max_streak,
                 "recent_games": recent_games,
                 "attempts_stats": attempts_stats,
+                "performance_by_developer": performance_by_developer,
+                "performance_by_genre": performance_by_genre,
+                "monthly_stats": monthly_stats,
+                "recent_activity": recent_activity,
             }
         )
 
@@ -498,20 +517,213 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
     def calculate_current_streak(self):
         """Calcular la racha actual del usuario"""
-        attempts = (
-            UserGameAttempt.objects.filter(user=self.request.user)
-            .select_related("daily_game")
-            .order_by("-daily_game__date")
-        )
+        from datetime import date, timedelta
 
+        today = timezone.now().date()
+        current_date = today
         current_streak = 0
-        for attempt in attempts:
-            if attempt.success:
-                current_streak += 1
-            else:
+
+        # Revisar día por día hacia atrás
+        while True:
+            try:
+                daily_game = DailyGame.objects.get(date=current_date)
+                user_attempt = UserGameAttempt.objects.get(
+                    user=self.request.user, daily_game=daily_game
+                )
+
+                if user_attempt.success:
+                    current_streak += 1
+                    current_date -= timedelta(days=1)
+                else:
+                    break
+
+            except (DailyGame.DoesNotExist, UserGameAttempt.DoesNotExist):
                 break
 
         return current_streak
+
+    def get_performance_by_developer(self):
+        """Obtener rendimiento por desarrollador"""
+        from django.db.models import Count, Q
+
+        attempts_with_developer = UserGameAttempt.objects.filter(
+            user=self.request.user, daily_game__game__developer__isnull=False
+        ).exclude(daily_game__game__developer="")
+
+        developer_stats = {}
+
+        for attempt in attempts_with_developer:
+            developer = attempt.daily_game.game.developer
+            if developer not in developer_stats:
+                developer_stats[developer] = {"total": 0, "won": 0}
+
+            developer_stats[developer]["total"] += 1
+            if attempt.success:
+                developer_stats[developer]["won"] += 1
+
+        # Calcular porcentajes y filtrar desarrolladores con al menos 2 juegos
+        filtered_stats = []
+        for dev, stats in developer_stats.items():
+            if stats["total"] >= 2:
+                win_rate = (stats["won"] / stats["total"]) * 100
+                filtered_stats.append(
+                    {
+                        "developer": dev,
+                        "total": stats["total"],
+                        "won": stats["won"],
+                        "win_rate": round(win_rate, 1),
+                    }
+                )
+
+        # Ordenar por win rate
+        return sorted(filtered_stats, key=lambda x: x["win_rate"], reverse=True)[:5]
+
+    def get_performance_by_genre(self):
+        """Obtener rendimiento por género"""
+        attempts_with_genre = UserGameAttempt.objects.filter(
+            user=self.request.user, daily_game__game__genres__isnull=False
+        ).exclude(daily_game__game__genres="")
+
+        genre_stats = {}
+
+        for attempt in attempts_with_genre:
+            genres = attempt.daily_game.game.genres.split(",")
+            for genre in genres:
+                genre = genre.strip()
+                if genre and genre not in genre_stats:
+                    genre_stats[genre] = {"total": 0, "won": 0}
+
+                if genre:
+                    genre_stats[genre]["total"] += 1
+                    if attempt.success:
+                        genre_stats[genre]["won"] += 1
+
+        # Calcular porcentajes y filtrar géneros con al menos 2 juegos
+        filtered_stats = []
+        for genre, stats in genre_stats.items():
+            if stats["total"] >= 2:
+                win_rate = (stats["won"] / stats["total"]) * 100
+                filtered_stats.append(
+                    {
+                        "genre": genre,
+                        "total": stats["total"],
+                        "won": stats["won"],
+                        "win_rate": round(win_rate, 1),
+                    }
+                )
+
+        return sorted(filtered_stats, key=lambda x: x["win_rate"], reverse=True)[:5]
+
+    def get_monthly_stats(self):
+        """Obtener estadísticas de los últimos 6 meses"""
+        from datetime import date, timedelta
+        from django.db.models import Count
+
+        today = timezone.now().date()
+        six_months_ago = today - timedelta(days=180)
+
+        monthly_data = []
+        current_date = today.replace(day=1)  # Primer día del mes actual
+
+        for i in range(6):
+            month_start = current_date
+            if current_date.month == 12:
+                month_end = current_date.replace(
+                    year=current_date.year + 1, month=1
+                ) - timedelta(days=1)
+            else:
+                month_end = current_date.replace(
+                    month=current_date.month + 1
+                ) - timedelta(days=1)
+
+            attempts_in_month = UserGameAttempt.objects.filter(
+                user=self.request.user,
+                daily_game__date__gte=month_start,
+                daily_game__date__lte=month_end,
+            )
+
+            total = attempts_in_month.count()
+            won = attempts_in_month.filter(success=True).count()
+
+            monthly_data.append(
+                {
+                    "month": current_date.strftime("%B %Y"),
+                    "total": total,
+                    "won": won,
+                    "win_rate": round((won / total * 100), 1) if total > 0 else 0,
+                }
+            )
+
+            # Mes anterior
+            if current_date.month == 1:
+                current_date = current_date.replace(
+                    year=current_date.year - 1, month=12
+                )
+            else:
+                current_date = current_date.replace(month=current_date.month - 1)
+
+        return list(reversed(monthly_data))
+
+    def get_recent_activity(self):
+        """Obtener actividad de los últimos 30 días"""
+        from datetime import date, timedelta
+
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+
+        recent_attempts = (
+            UserGameAttempt.objects.filter(
+                user=self.request.user, daily_game__date__gte=thirty_days_ago
+            )
+            .select_related("daily_game__game")
+            .order_by("-daily_game__date")
+        )
+
+        return {
+            "total_games": recent_attempts.count(),
+            "won_games": recent_attempts.filter(success=True).count(),
+            "guessed_it": recent_attempts.filter(success=True, attempts_used=1).count(),
+            "average_attempts": round(
+                sum(a.attempts_used for a in recent_attempts if a.success)
+                / max(recent_attempts.filter(success=True).count(), 1),
+                1,
+            ),
+        }
+
+
+class PublicProfileView(TemplateView):
+    """Vista pública del perfil de usuario (para retos futuros)"""
+
+    template_name = "accounts/public_profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        username = kwargs.get("username")
+
+        try:
+            user = User.objects.get(username=username)
+            profile = user.profile
+
+            # Solo mostrar estadísticas públicas básicas
+            user_attempts = UserGameAttempt.objects.filter(user=user)
+
+            context.update(
+                {
+                    "profile_user": user,
+                    "profile": profile,
+                    "total_games": user_attempts.count(),
+                    "won_games": user_attempts.filter(success=True).count(),
+                    "guessed_it_games": user_attempts.filter(
+                        success=True, attempts_used=1
+                    ).count(),
+                    "current_streak": profile.current_streak,
+                    "max_streak": profile.max_streak,
+                }
+            )
+
+        except User.DoesNotExist:
+            context["user_not_found"] = True
+
+        return context
 
 
 class UpdateProfileView(LoginRequiredMixin, View):

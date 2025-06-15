@@ -1,272 +1,193 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="description" content="Guess It Yet? - Juego diario de adivinanza de videojuegos">
+    <meta name="keywords" content="videojuegos, juego, adivinanza, daily, puzzle">
+    <meta name="author" content="Guess It Yet?">
 
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="{% block meta_description %}GuessItYet - Adivina el videojuego con capturas e información gradual{% endblock %}">
-    <meta name="keywords" content="{% block meta_keywords %}juego, videojuegos, adivinar, guess, quiz, gaming{% endblock %}">
-    <meta name="author" content="GuessItYet">
-
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="{% block og_title %}GuessItYet{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Adivina el videojuego con capturas e información gradual{% endblock %}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
-
-    <title>{% block title %}GuessItYet{% endblock %}</title>
+    <title>{% block title %}Guess It Yet? - ¿Ya lo has adivinado?{% endblock %}</title>
 
     <!-- Favicon -->
-    {% load static %}
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
-    <link rel="apple-touch-icon" href="{% static 'images/favicon.ico' %}">
-
-    <!-- Google Fonts - Roboto para Android theme -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
     <!-- Bootstrap CSS -->
-    {% load bootstrap5 %}
-    {% bootstrap_css %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Custom CSS -->
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS Variables -->
     <link rel="stylesheet" href="{% static 'css/variables.css' %}">
+
+    <!-- Base CSS -->
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    <!-- CSS específico de la página -->
     {% block extra_css %}{% endblock %}
-
-    <!-- Estilos adicionales para notificaciones mejoradas -->
-    <style>
-        /* Contenedor de notificaciones fijo arriba */
-        .messages-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1060;
-            pointer-events: none;
-            padding: 1rem;
-        }
-
-        .messages-container .alert {
-            margin-bottom: 0.5rem;
-            pointer-events: auto;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: var(--shadow-xl);
-            border: 1px solid var(--border-color);
-            animation: slideDown 0.3s ease-out;
-        }
-
-        /* Animación de entrada */
-        @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        /* Espaciado para evitar que el contenido se oculte detrás de las notificaciones */
-        .messages-spacer {
-            height: 0;
-            transition: height 0.3s ease;
-        }
-
-        .messages-spacer.active {
-            height: 80px;
-        }
-
-        /* Estilos específicos para diferentes tipos de alertas */
-        .alert-success {
-            background: var(--status-success-bg);
-            border-left: 4px solid var(--success-color);
-            color: var(--status-success-text);
-        }
-
-        .alert-warning {
-            background: var(--status-warning-bg);
-            border-left: 4px solid var(--warning-color);
-            color: var(--status-warning-text);
-        }
-
-        .alert-danger, .alert-error {
-            background: var(--status-error-bg);
-            border-left: 4px solid var(--error-color);
-            color: var(--status-error-text);
-        }
-
-        .alert-info {
-            background: var(--status-info-bg);
-            border-left: 4px solid var(--info-color);
-            color: var(--status-info-text);
-        }
-
-        /* Auto-cerrar después de tiempo */
-        .alert[data-auto-dismiss="true"] {
-            animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 4.7s;
-        }
-
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .messages-container {
-                padding: 0.5rem;
-            }
-
-            .messages-container .alert {
-                font-size: 0.9rem;
-            }
-        }
-    </style>
 </head>
+
 <body class="{% block body_class %}{% endblock %}">
-    <!-- CSRF Token para JavaScript -->
-    {% csrf_token %}
-
-    <!-- Contenedor de notificaciones fijo arriba -->
-    {% if messages %}
-        <div class="messages-container">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
-                     role="alert"
-                     data-auto-dismiss="true">
-                    {% if message.tags == 'success' %}
-                        <i class="fas fa-check-circle me-2"></i>
-                    {% elif message.tags == 'warning' %}
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                    {% elif message.tags == 'error' or message.tags == 'danger' %}
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                    {% else %}
-                        <i class="fas fa-info-circle me-2"></i>
-                    {% endif %}
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                </div>
-            {% endfor %}
-        </div>
-        <div class="messages-spacer active"></div>
-    {% endif %}
-
     <div class="main-layout">
-        <!-- Navigation -->
-        <nav class="navbar navbar-expand-lg sticky-top">
+        <!-- Navegación -->
+        <nav class="navbar navbar-expand-lg">
             <div class="container">
-                <!-- Logo/Brand actualizado -->
+                <!-- Logo/Brand - Siempre a la izquierda -->
                 <a class="navbar-brand" href="{% url 'guessityet:daily_game' %}">
-                    <!-- Aquí irá tu logo -->
                     <img src="{% static 'images/logo.png' %}" alt="Guess It Yet?" class="navbar-logo">
                     <span class="brand-text">Guess It Yet?</span>
                 </a>
 
-                <!-- Mobile toggle button -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <i class="fas fa-bars"></i>
+                <!-- Botón hamburguesa para móvil -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- Navigation items -->
+                <!-- Menú de navegación -->
                 <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Menú principal centrado -->
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'daily_game' %}active{% endif %}"
-                               href="{% url 'guessityet:daily_game' %}">
-                                <i class="fas fa-calendar-day me-1"></i>Juego Diario
+                            <a class="nav-link" href="{% url 'guessityet:daily_game' %}">
+                                <i class="fas fa-calendar-day me-1"></i>
+                                Hoy
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'game_history' %}active{% endif %}"
-                               href="{% url 'guessityet:game_history' %}">
-                                <i class="fas fa-history me-1"></i>Historial
+                            <a class="nav-link" href="{% url 'guessityet:game_history' %}">
+                                <i class="fas fa-history me-1"></i>
+                                Historial
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'how_to_play' %}active{% endif %}"
-                               href="{% url 'guessityet:how_to_play' %}">
-                                <i class="fas fa-question-circle me-1"></i>Cómo Jugar
+                            <a class="nav-link" href="{% url 'guessityet:how_to_play' %}">
+                                <i class="fas fa-question-circle me-1"></i>
+                                Cómo Jugar
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}"
-                               href="{% url 'guessityet:about' %}">
-                                <i class="fas fa-info-circle me-1"></i>Acerca de
+                            <a class="nav-link" href="{% url 'guessityet:about' %}">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Acerca de
                             </a>
                         </li>
                     </ul>
 
-                    <!-- User menu -->
-                    <ul class="navbar-nav">
-                        {% if user.is_authenticated %}
+                    <!-- Menú de usuario y tema -->
+                    {% if user.is_authenticated %}
+                        <ul class="navbar-nav">
+                            <!-- Botón de tema -->
+                            <li class="nav-item">
+                                <button class="theme-toggle nav-link" type="button" onclick="toggleTheme()" aria-label="Cambiar tema">
+                                    <i class="fas fa-sun theme-icon-light"></i>
+                                    <i class="fas fa-moon theme-icon-dark"></i>
+                                </button>
+                            </li>
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-user me-2"></i>
-                                    <span>{{ user.username }}</span>
-                                    {% if user.profile.current_streak > 0 %}
-                                        <span class="badge bg-warning text-dark ms-2">{{ user.profile.current_streak }}</span>
-                                    {% endif %}
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="user-avatar me-2">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <span class="d-none d-md-inline">{{ user.username }}</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
+                                        <h6 class="dropdown-header">
+                                            <i class="fas fa-user-circle me-2"></i>
+                                            Hola, {{ user.username }}
+                                        </h6>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
                                         <a class="dropdown-item" href="{% url 'guessityet:profile' %}">
-                                            <i class="fas fa-user-circle me-2"></i>Mi Perfil
+                                            <i class="fas fa-id-card me-2"></i>
+                                            Mi Perfil
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'guessityet:game_history' %}">
+                                            <i class="fas fa-history me-2"></i>
+                                            Mi Historial
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <a class="dropdown-item" href="{% url 'guessityet:password_change' %}">
-                                            <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                                        <a class="dropdown-item text-muted" href="#" onclick="showComingSoon('Configuración')">
+                                            <i class="fas fa-cog me-2"></i>
+                                            Configuración
+                                            <small class="ms-2 text-muted">(Próximamente)</small>
                                         </a>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <a class="dropdown-item" href="{% url 'guessityet:logout' %}">
-                                            <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                        <a class="dropdown-item text-danger" href="{% url 'guessityet:logout' %}">
+                                            <i class="fas fa-sign-out-alt me-2"></i>
+                                            Cerrar Sesión
                                         </a>
                                     </li>
                                 </ul>
                             </li>
-                        {% else %}
+                        </ul>
+                    {% else %}
+                        <ul class="navbar-nav">
+                            <!-- Botón de tema -->
+                            <li class="nav-item">
+                                <button class="theme-toggle nav-link" type="button" onclick="toggleTheme()" aria-label="Cambiar tema">
+                                    <i class="fas fa-sun theme-icon-light"></i>
+                                    <i class="fas fa-moon theme-icon-dark"></i>
+                                </button>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'guessityet:login' %}">
-                                    <i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
+                                    <i class="fas fa-sign-in-alt me-1"></i>
+                                    Iniciar Sesión
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link btn btn-outline-primary ms-2" href="{% url 'guessityet:register' %}" style="border-radius: 20px; padding: 0.5rem 1rem;">
-                                    <i class="fas fa-user-plus me-1"></i>Registrarse
+                                <a class="nav-link btn btn-outline-primary btn-sm ms-2" href="{% url 'guessityet:register' %}">
+                                    <i class="fas fa-user-plus me-1"></i>
+                                    Registrarse
                                 </a>
                             </li>
-                        {% endif %}
-
-                        <!-- Botón cambio de tema - movido al final -->
-                        <li class="nav-item">
-                            <button class="btn btn-link nav-link theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
-                                <i class="fas fa-sun theme-icon-light"></i>
-                                <i class="fas fa-moon theme-icon-dark"></i>
-                            </button>
-                        </li>
-                    </ul>
+                        </ul>
+                    {% endif %}
                 </div>
             </div>
         </nav>
 
-        <!-- Main content -->
+        <!-- Contenido principal -->
         <main class="main-content">
-            <!-- Page content -->
+            <!-- Mensajes de Django -->
+            {% if messages %}
+                <div class="container">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" data-auto-close="5000">
+                            <div class="d-flex align-items-center">
+                                {% if message.tags == 'success' %}
+                                    <i class="fas fa-check-circle me-2"></i>
+                                {% elif message.tags == 'error' %}
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% elif message.tags == 'info' %}
+                                    <i class="fas fa-info-circle me-2"></i>
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Contenido específico de cada página -->
             {% block content %}{% endblock %}
         </main>
 
@@ -277,48 +198,40 @@
                     <div class="col-md-6">
                         <div class="d-flex align-items-center mb-3 mb-md-0">
                             <img src="{% static 'images/logo.png' %}" alt="Guess It Yet?" class="footer-logo">
-                            <span class="fw-bold">Guess It Yet?</span>
+                            <span class="fw-bold me-3">Guess It Yet?</span>
                         </div>
-                        <p class="text-secondary mb-0 small">
-                            Adivina videojuegos con capturas e información gradual.
-                        </p>
                     </div>
                     <div class="col-md-6">
                         <div class="row">
-                            <div class="col-6">
-                                <h6 class="fw-bold mb-2">Enlaces</h6>
+                            <div class="col-sm-6">
+                                <h6>Enlaces</h6>
                                 <ul class="list-unstyled small">
-                                    <li><a href="{% url 'guessityet:how_to_play' %}" class="text-secondary text-decoration-none">Cómo Jugar</a></li>
-                                    <li><a href="{% url 'guessityet:about' %}" class="text-secondary text-decoration-none">Acerca de</a></li>
-                                    <li><a href="{% url 'guessityet:game_history' %}" class="text-secondary text-decoration-none">Historial</a></li>
+                                    <li><a href="{% url 'guessityet:how_to_play' %}">Cómo Jugar</a></li>
+                                    <li><a href="{% url 'guessityet:about' %}">Acerca de</a></li>
+                                    <li><a href="{% url 'guessityet:game_history' %}">Historial</a></li>
                                 </ul>
                             </div>
-                            <div class="col-6">
-                                <h6 class="fw-bold mb-2">Cuenta</h6>
+                            <div class="col-sm-6">
+                                <h6>Recursos</h6>
                                 <ul class="list-unstyled small">
-                                    {% if user.is_authenticated %}
-                                        <li><a href="{% url 'guessityet:profile' %}" class="text-secondary text-decoration-none">Mi Perfil</a></li>
-                                        <li><a href="{% url 'guessityet:logout' %}" class="text-secondary text-decoration-none">Cerrar Sesión</a></li>
-                                    {% else %}
-                                        <li><a href="{% url 'guessityet:login' %}" class="text-secondary text-decoration-none">Iniciar Sesión</a></li>
-                                        <li><a href="{% url 'guessityet:register' %}" class="text-secondary text-decoration-none">Registrarse</a></li>
-                                    {% endif %}
+                                    <li><a href="https://www.igdb.com/" target="_blank">IGDB API</a></li>
+                                    <li><a href="#" onclick="showComingSoon('Blog')">Blog</a></li>
+                                    <li><a href="#" onclick="showComingSoon('FAQ')">FAQ</a></li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
-                <hr class="my-4" style="border-color: var(--border-color);">
+                <hr class="my-4">
                 <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <p class="text-secondary mb-0 small">
-                            &copy; {% now "Y" %} Guess It Yet? Todos los derechos reservados.
-                        </p>
+                    <div class="col-md-6">
+                        <small style="color: var(--text-primary);">
+                            © {% now "Y" %} Guess It Yet? - Todos los derechos reservados
+                        </small>
                     </div>
-                    <div class="col-md-4 text-md-end">
-                        <small class="text-secondary">
-                            Datos de juegos por
-                            <a href="https://www.igdb.com/" target="_blank" class="text-secondary">IGDB</a>
+                    <div class="col-md-6 text-md-end">
+                        <small style="color: var(--text-primary);">
+                            Desarrollado con Python: el mejor lenguaje de programación
                         </small>
                     </div>
                 </div>
@@ -326,47 +239,16 @@
         </footer>
     </div>
 
-    <!-- Bootstrap JavaScript -->
-    {% bootstrap_javascript %}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Custom JavaScript -->
-    <script src="{% static 'js/base.js' %}"></script>
+    <!-- Theme Switcher -->
     <script src="{% static 'js/theme-switcher.js' %}"></script>
 
-    <!-- JavaScript para auto-cerrar notificaciones -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-cerrar alertas después de 5 segundos
-            const alerts = document.querySelectorAll('.alert[data-auto-dismiss="true"]');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                    bsAlert.close();
-                }, 5000);
-            });
+    <!-- Base JavaScript -->
+    <script src="{% static 'js/base.js' %}"></script>
 
-            // Ajustar espaciado dinámicamente
-            const messagesSpacer = document.querySelector('.messages-spacer');
-            if (messagesSpacer) {
-                // Remover espaciado cuando se cierren todas las alertas
-                const observer = new MutationObserver(() => {
-                    const visibleAlerts = document.querySelectorAll('.messages-container .alert');
-                    if (visibleAlerts.length === 0) {
-                        messagesSpacer.classList.remove('active');
-                    }
-                });
-
-                observer.observe(document.querySelector('.messages-container'), {
-                    childList: true,
-                    subtree: true
-                });
-            }
-        });
-    </script>
-
+    <!-- JavaScript específico de la página -->
     {% block extra_js %}{% endblock %}
-
-    <!-- Toast container para notificaciones -->
-    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;"></div>
 </body>
 </html>

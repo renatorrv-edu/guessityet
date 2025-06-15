@@ -100,6 +100,11 @@ urlpatterns = [
     path(
         "perfil/actualizar/", views.UpdateProfileView.as_view(), name="update_profile"
     ),
+    path(
+        "usuario/<str:username>/",
+        views.PublicProfileView.as_view(),
+        name="public_profile",
+    ),
     # ============================================================================
     # URLS DE PÁGINAS INFORMATIVAS
     # ============================================================================
