@@ -229,21 +229,6 @@ class GameDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         daily_game = context["daily_game"]
 
-        # Limpiar la sesión para empezar fresh
-        if "game_state" in self.request.session:
-            del self.request.session["game_state"]
-
-        # Inicializar sesión de juego para este juego específico
-        self.request.session["game_state"] = {
-            "game_id": daily_game.game.id,
-            "current_attempt": 1,
-            "attempts": [],
-            "won": False,
-            "lost": False,
-            "guessed_it": False,
-        }
-        self.request.session.modified = True
-
         # Obtener información del intento del usuario si está autenticado
         user_attempt = None
         if self.request.user.is_authenticated:
@@ -258,14 +243,53 @@ class GameDetailView(DetailView):
         today = timezone.now().astimezone().date()
         is_today = daily_game.date == today
 
+        # SI EL USUARIO YA COMPLETÓ EL JUEGO: cargar el estado desde la BD
+        if user_attempt and (user_attempt.success or user_attempt.attempts_data):
+            # Reconstruir el game_state desde los datos guardados
+            game_state = {
+                "game_id": daily_game.game.id,
+                "current_attempt": (
+                    user_attempt.attempts_used + 1
+                    if not user_attempt.success
+                    else user_attempt.attempts_used
+                ),
+                "attempts": user_attempt.attempts_data,
+                "won": user_attempt.success,
+                "lost": not user_attempt.success
+                and len(user_attempt.attempts_data) >= 6,
+                "guessed_it": user_attempt.success and user_attempt.attempts_used == 1,
+            }
+
+            # Actualizar la sesión con el estado completado
+            self.request.session["game_state"] = game_state
+            self.request.session.modified = True
+
+        else:
+            # SI NO HA JUGADO: crear nuevo game_state
+            # Limpiar la sesión para empezar fresh
+            if "game_state" in self.request.session:
+                del self.request.session["game_state"]
+
+            # Inicializar sesión de juego para este juego específico
+            game_state = {
+                "game_id": daily_game.game.id,
+                "current_attempt": 1,
+                "attempts": [],
+                "won": False,
+                "lost": False,
+                "guessed_it": False,
+            }
+            self.request.session["game_state"] = game_state
+            self.request.session.modified = True
+
         context.update(
             {
                 "game": daily_game.game,
                 "screenshots": daily_game.game.screenshot_set.all().order_by(
                     "difficulty"
                 ),
-                "game_state": self.request.session["game_state"],
-                "game_state_json": json.dumps(self.request.session["game_state"]),
+                "game_state": game_state,
+                "game_state_json": json.dumps(game_state),
                 "user_attempt": user_attempt,
                 "today": daily_game.date,  # Usar la fecha del juego, no hoy
                 "is_historical": not is_today,  # Flag para mostrar si es histórico
@@ -1001,12 +1025,12 @@ def process_guess(
             if is_current_game:
                 # Es el juego más reciente, actualizar estadísticas
                 save_user_attempt(
-                    request, daily_game, is_correct, game_state["current_attempt"] - 1
+                    request, daily_game, is_correct, game_state["current_attempt"]
                 )
             else:
                 # Es un juego anterior, no actualizar estadísticas
                 save_historical_user_attempt(
-                    request, daily_game, is_correct, game_state["current_attempt"] - 1
+                    request, daily_game, is_correct, game_state["current_attempt"]
                 )
 
     return {

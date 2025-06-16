@@ -32,6 +32,13 @@
     --border-strong: #6A6A6A;    /* Borde destacado */
     --divider-color: #4A4A4A;    /* Divisores */
 
+    /* Variables RGB para usar con rgba() */
+    --primary-rgb: 52, 152, 219;     /* RGB de #3498DB */
+    --success-rgb: 46, 125, 50;      /* RGB de #2E7D32 */
+    --error-rgb: 255, 82, 82;        /* RGB de #FF5252 */
+    --warning-rgb: 249, 168, 37;     /* RGB de #F9A825 */
+    --info-rgb: 68, 138, 255;        /* RGB de #448AFF */
+
     /* Sombras - adaptadas para el tema más claro */
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
     --shadow-md: 0 4px 6px rgba(0,0,0,0.25);

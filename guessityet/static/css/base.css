@@ -306,6 +306,7 @@ a:hover {
     padding: 0.5rem 0;
     min-width: 220px;
     background: var(--bg-surface-1);
+     z-index: 1050 !important;
 }
 
 .dropdown-header {
@@ -350,7 +351,7 @@ a:hover {
 
 .dropdown-item.text-muted:hover {
     background: var(--bg-surface-1);
-    color: var(--text-muted);
+    color: var(--text-tertiary);
 }
 
 /* Bootstrap overrides - Cards */
@@ -823,4 +824,41 @@ footer a[target="_blank"]:hover {
     .btn {
         display: none !important;
     }
+}
+
+/* Fix específico para dropdown sobre imagen del juego */
+.dropdown-toggle {
+    position: relative;
+    z-index: 1051;
+}
+
+.dropdown-menu {
+    position: absolute !important;
+    z-index: 1052 !important;
+}
+
+/* Asegurar que el navbar no interfiera */
+.navbar {
+    z-index: 1040;
+}
+
+/* Si la imagen sigue estando por encima, reducir su z-index */
+.screenshot-container,
+.screenshot-main {
+    position: relative;
+    z-index: 1;
+}
+
+/* Forzar el contexto de apilamiento correcto */
+.navbar .dropdown {
+    position: static !important;
+}
+
+.navbar .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    z-index: 1052 !important;
+    transform: none !important;
 }
