@@ -990,17 +990,21 @@ def process_guess(
 
     # Guardar estadísticas del usuario si está autenticado
     if request.user.is_authenticated:
-        # Determinar si es juego de hoy o histórico
-        today = timezone.now().date()
-        try:
-            daily_game = DailyGame.objects.get(date=today, game=game)
-            save_user_attempt(
-                request, daily_game, is_correct, game_state["current_attempt"] - 1
-            )
-        except DailyGame.DoesNotExist:
-            # Es un juego histórico, buscar el DailyGame correspondiente
-            daily_game = DailyGame.objects.filter(game=game).first()
-            if daily_game:
+        # Buscar el DailyGame correspondiente a este juego
+        daily_game = DailyGame.objects.filter(game=game).first()
+
+        if daily_game:
+            # Determinar si es el juego más reciente disponible (lo consideramos "actual")
+            latest_game = DailyGame.objects.order_by("-date").first()
+            is_current_game = latest_game and daily_game.id == latest_game.id
+
+            if is_current_game:
+                # Es el juego más reciente, actualizar estadísticas
+                save_user_attempt(
+                    request, daily_game, is_correct, game_state["current_attempt"] - 1
+                )
+            else:
+                # Es un juego anterior, no actualizar estadísticas
                 save_historical_user_attempt(
                     request, daily_game, is_correct, game_state["current_attempt"] - 1
                 )
