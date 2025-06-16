@@ -1,0 +1,29 @@
+¡Hola {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}!
+
+Tu cuenta ha sido confirmada exitosamente. ¡Ya puedes empezar a disfrutar del juego diario de adivinanza de videojuegos más adictivo!
+
+JUGAR AHORA:
+{{ daily_game_url }}
+
+¿Cómo funciona {{ site_name }}?
+- Juego diario: Cada día un nuevo videojuego para adivinar
+- 6 intentos: Tienes hasta 6 oportunidades para acertar
+- Pistas visuales: Screenshots con diferentes niveles de dificultad
+- Estadísticas: Sigue tu progreso y mantén tu racha de victorias
+- Historial: Revisa todos los juegos anteriores
+
+Consejos para empezar:
+- Empieza con las screenshots más fáciles
+- Presta atención a los detalles únicos del juego
+- Si no reconoces el juego, piensa en franquicias populares
+- ¡No tengas miedo de intentar nombres similares!
+
+¡Que disfrutes jugando y buena suerte manteniendo tu racha de victorias!
+
+¿Tienes preguntas? Visita nuestra página de ayuda o contáctanos directamente.
+
+---
+© 2025 {{ site_name }} - El juego diario de adivinanza de videojuegos
+Jugar: {{ daily_game_url }}
+Mi perfil: {{ login_url }}
+Soporte: soporte@guessityet.com

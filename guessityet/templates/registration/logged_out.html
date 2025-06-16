@@ -1,28 +1,44 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Sesión Cerrada - GuessItYet{% endblock %}
+{% block title %}Sesión Cerrada - Guess It Yet?{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'css/errors.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 text-center">
-            <div class="card shadow">
-                <div class="card-body py-5">
-                    <i class="fas fa-sign-out-alt fa-3x text-muted mb-3"></i>
-                    <h3>¡Hasta luego!</h3>
-                    <p class="text-muted mb-4">
-                        Has cerrado sesión correctamente.
-                    </p>
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="{% url 'guessityet:daily_game' %}" class="btn btn-primary">
-                            <i class="fas fa-gamepad me-2"></i>Seguir Jugando
-                        </a>
-                        <a href="{% url 'login' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
-                        </a>
-                    </div>
-                </div>
-            </div>
+<div class="auth-container">
+    <div class="logout-card">
+        <div class="logout-icon">
+            <i class="fas fa-sign-out-alt"></i>
+        </div>
+        <h4 class="logout-title">¡Hasta luego!</h4>
+        <p class="logout-message">
+            Has cerrado sesión correctamente. Tu progreso se ha guardado y podrás continuar
+            donde lo dejaste cuando vuelvas a iniciar sesión.
+        </p>
+
+        <div class="logout-actions">
+            <a href="{% url 'guessityet:daily_game' %}" class="btn btn-primary">
+                <i class="fas fa-gamepad me-2"></i>Seguir Jugando
+            </a>
+            <a href="{% url 'guessityet:login' %}" class="btn btn-outline-primary">
+                <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+            </a>
+        </div>
+
+        <div class="mt-4 pt-3" style="border-top: 1px solid var(--border-color);">
+            <p class="text-center mb-2" style="color: var(--text-secondary); font-size: 0.9rem;">
+                <i class="fas fa-lightbulb me-1"></i>¿Sabías que...?
+            </p>
+            <p class="text-center mb-0" style="color: var(--text-tertiary); font-size: 0.85rem;">
+                Puedes jugar sin cuenta, pero crear una te permite guardar tu progreso
+                y ver estadísticas detalladas de todos tus juegos.
+            </p>
         </div>
     </div>
 </div>

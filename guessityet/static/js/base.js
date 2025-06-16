@@ -1,121 +1,126 @@
-// JavaScript base para GuessItYet
-console.log('GuessItYet - Base JavaScript cargado');
+// Base JavaScript para GuessItYet
+console.log('🎮 GuessItYet - Base JS cargado');
 
 // Utilidades globales
 const GuessItYetUtils = {
-    // Obtener token CSRF para peticiones AJAX
-    getCSRFToken() {
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-        if (csrfMeta) {
-            return csrfMeta.getAttribute('content');
-        }
-
-        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (csrfInput) {
-            return csrfInput.value;
-        }
-
-        const cookies = document.cookie.split(';');
-        for (let cookie of cookies) {
-            const [name, value] = cookie.trim().split('=');
-            if (name === 'csrftoken') {
-                return value;
-            }
-        }
-
-        return '';
-    },
-
     // Mostrar toast/notificación
-    showToast(message, type = 'info', duration = 3000) {
-        const toastContainer = this.getOrCreateToastContainer();
-
+    showToast: function(message, type = 'info', duration = 5000) {
         const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
+        toast.className = `toast-notification toast-${type}`;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${this.getToastColor(type)};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            z-index: 1050;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 350px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         `;
 
-        toastContainer.appendChild(toast);
+        const icon = this.getToastIcon(type);
+        toast.innerHTML = `
+            <i class="${icon}"></i>
+            <span>${message}</span>
+            <button class="btn-close btn-close-white ms-2" onclick="this.parentElement.remove()"></button>
+        `;
 
-        const bsToast = new bootstrap.Toast(toast, {
-            autohide: true,
-            delay: duration
-        });
+        document.body.appendChild(toast);
 
-        bsToast.show();
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 100);
 
-        // Limpiar el toast después de que se oculte
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }, duration);
     },
 
-    // Crear contenedor de toasts si no existe
-    getOrCreateToastContainer() {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.className = 'toast-container position-fixed top-0 end-0 p-3';
-            container.style.zIndex = '1055';
-            document.body.appendChild(container);
-        }
-        return container;
-    },
-
-    // Formatear fecha
-    formatDate(date, options = {}) {
-        const defaultOptions = {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+    getToastColor: function(type) {
+        const colors = {
+            success: '#48bb78',
+            error: '#f56565',
+            warning: '#ed8936',
+            info: '#4299e1'
         };
-
-        return new Date(date).toLocaleDateString('es-ES', {
-            ...defaultOptions,
-            ...options
-        });
+        return colors[type] || colors.info;
     },
 
-    // Debounce para búsquedas
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
+    getToastIcon: function(type) {
+        const icons = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            warning: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
         };
+        return icons[type] || icons.info;
     },
 
-    // Validar formularios básicos
-    validateForm(formElement) {
-        const inputs = formElement.querySelectorAll('input[required], textarea[required], select[required]');
+    // Validar formulario
+    validateForm: function(form) {
+        const requiredFields = form.querySelectorAll('[required]');
         let isValid = true;
 
-        inputs.forEach(input => {
-            if (!input.value.trim()) {
-                input.classList.add('is-invalid');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
                 isValid = false;
+                field.classList.add('is-invalid');
+
+                // Crear mensaje de error si no existe
+                let errorMsg = field.parentNode.querySelector('.invalid-feedback');
+                if (!errorMsg) {
+                    errorMsg = document.createElement('div');
+                    errorMsg.className = 'invalid-feedback';
+                    errorMsg.textContent = 'Este campo es obligatorio';
+                    field.parentNode.appendChild(errorMsg);
+                }
             } else {
-                input.classList.remove('is-invalid');
+                field.classList.remove('is-invalid');
+                const errorMsg = field.parentNode.querySelector('.invalid-feedback');
+                if (errorMsg) {
+                    errorMsg.remove();
+                }
             }
         });
 
         return isValid;
     },
 
-    // Confirmar acción destructiva
-    confirmAction(message = '¿Estás seguro?') {
+    // Formatear fecha
+    formatDate: function(date) {
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        return new Date(date).toLocaleDateString('es-ES', options);
+    },
+
+    // Copiar al portapapeles
+    copyToClipboard: function(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            this.showToast('Copiado al portapapeles', 'success');
+        }).catch(() => {
+            this.showToast('Error al copiar', 'error');
+        });
+    },
+
+    // Confirmar acción
+    confirm: function(message) {
         return confirm(message);
     }
 };
@@ -186,6 +191,10 @@ function setupFormValidation() {
             input.addEventListener('input', function() {
                 if (this.classList.contains('is-invalid') && this.value.trim()) {
                     this.classList.remove('is-invalid');
+                    const errorMsg = this.parentNode.querySelector('.invalid-feedback');
+                    if (errorMsg) {
+                        errorMsg.remove();
+                    }
                 }
             });
         });
@@ -199,24 +208,246 @@ function setupConfirmButtons() {
     confirmButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             const message = this.dataset.confirm || '¿Estás seguro?';
-            if (!GuessItYetUtils.confirmAction(message)) {
+            if (!GuessItYetUtils.confirm(message)) {
                 e.preventDefault();
             }
         });
     });
 }
 
-// Funciones globales para uso en plantillas
+// Función para mostrar notificación de "próximamente"
+function showComingSoon(feature) {
+    const notification = document.createElement('div');
+    notification.className = 'coming-soon-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        z-index: 1000;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        max-width: 300px;
+        border-left: 4px solid var(--primary-light);
+    `;
+
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-clock me-2"></i>
+            <div>
+                <strong>${feature}</strong><br>
+                <small>Esta función estará disponible pronto</small>
+            </div>
+            <button class="btn-close btn-close-white ms-2" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }
+    }, 4000);
+}
+
+// Función para generar enlace de perfil público
+function generateProfileLink(username) {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/usuario/${username}/`;
+}
+
+// Función para mostrar estadísticas rápidas en tooltips
+function showQuickStats(element, stats) {
+    if (!element || !stats) return;
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'quick-stats-tooltip';
+    tooltip.style.cssText = `
+        position: absolute;
+        background: var(--bg-surface-2);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        box-shadow: var(--shadow-lg);
+        z-index: 1000;
+        min-width: 200px;
+        font-size: 0.85rem;
+    `;
+
+    tooltip.innerHTML = `
+        <div class="quick-stats-content">
+            <div class="mb-2"><strong>Estadísticas Rápidas</strong></div>
+            <div class="d-flex justify-content-between mb-1">
+                <span>Juegos:</span>
+                <span>${stats.total || 0}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1">
+                <span>Ganados:</span>
+                <span>${stats.won || 0}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Racha:</span>
+                <span>${stats.streak || 0}</span>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(tooltip);
+
+    // Posicionar tooltip
+    const rect = element.getBoundingClientRect();
+    tooltip.style.left = rect.left + 'px';
+    tooltip.style.top = rect.bottom + 10 + 'px';
+
+    // Eliminar después de 3 segundos o al hacer click fuera
+    const removeTooltip = () => {
+        if (tooltip.parentNode) {
+            tooltip.parentNode.removeChild(tooltip);
+        }
+        document.removeEventListener('click', removeTooltip);
+    };
+
+    setTimeout(removeTooltip, 3000);
+    setTimeout(() => {
+        document.addEventListener('click', removeTooltip);
+    }, 100);
+}
+
+// Función para validar formularios de perfil
+function validateProfileForm(form) {
+    const requiredFields = form.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            isValid = false;
+            field.classList.add('is-invalid');
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+
+    return isValid;
+}
+
+// Función para previsualizar cambios del perfil
+function previewProfileChanges(formData) {
+    // Esta función se expandirá cuando se añadan más campos editables
+    console.log('Previsualizando cambios del perfil:', formData);
+}
+
+// Función para manejar errores de carga de imágenes
+function handleImageError(img) {
+    img.style.display = 'none';
+
+    // Mostrar placeholder si existe
+    const placeholder = img.parentNode.querySelector('.image-placeholder');
+    if (placeholder) {
+        placeholder.style.display = 'flex';
+    }
+}
+
+// Función para lazy loading de imágenes
+function setupLazyLoading() {
+    const images = document.querySelectorAll('img[data-src]');
+
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.remove('lazy');
+                observer.unobserve(img);
+            }
+        });
+    });
+
+    images.forEach(img => imageObserver.observe(img));
+}
+
+// Función para smooth scroll
+function smoothScrollTo(target) {
+    const element = document.querySelector(target);
+    if (element) {
+        element.scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Función para obtener cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Configurar CSRF para requests AJAX
+const csrftoken = getCookie('csrftoken');
+
+// Función para hacer requests AJAX seguros
+function safeAjax(url, options = {}) {
+    const defaultOptions = {
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+    };
+
+    return fetch(url, { ...defaultOptions, ...options });
+}
+
+// Función para manejar errores de red
+function handleNetworkError(error) {
+    console.error('Error de red:', error);
+    GuessItYetUtils.showToast('Error de conexión. Inténtalo de nuevo.', 'error');
+}
+
+// Función para detectar si es móvil
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+// Función para detectar tema del sistema
+function getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+// Exponer funciones globalmente
 window.GuessItYetUtils = GuessItYetUtils;
-
-// Manejar errores AJAX globalmente
-window.addEventListener('unhandledrejection', function(event) {
-    console.error('Error no manejado:', event.reason);
-    GuessItYetUtils.showToast('Ha ocurrido un error inesperado', 'danger');
-});
-
-// Funciones de utilidad adicionales
-window.showSuccessMessage = (message) => GuessItYetUtils.showToast(message, 'success');
-window.showErrorMessage = (message) => GuessItYetUtils.showToast(message, 'danger');
-window.showWarningMessage = (message) => GuessItYetUtils.showToast(message, 'warning');
-window.showInfoMessage = (message) => GuessItYetUtils.showToast(message, 'info');
+window.showComingSoon = showComingSoon;
+window.generateProfileLink = generateProfileLink;
+window.showQuickStats = showQuickStats;
+window.validateProfileForm = validateProfileForm;
+window.previewProfileChanges = previewProfileChanges;
+window.handleImageError = handleImageError;
+window.setupLazyLoading = setupLazyLoading;
+window.smoothScrollTo = smoothScrollTo;
+window.safeAjax = safeAjax;
+window.handleNetworkError = handleNetworkError;
+window.isMobile = isMobile;
+window.getSystemTheme = getSystemTheme;

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirma tu cuenta - {{ site_name }}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .email-header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .email-body {
+            padding: 30px 20px;
+        }
+        .welcome-message {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        .confirmation-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        .confirmation-button:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: white !important;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .info-box {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .info-box li {
+            margin: 5px 0;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .security-notice {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            color: #c53030;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 20px 0;
+        }
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            .email-header, .email-body {
+                padding: 20px 15px;
+            }
+            .confirmation-button {
+                display: block;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>🎮 {{ site_name }}</h1>
+            <p>Confirma tu cuenta para empezar a jugar</p>
+        </div>
+
+        <div class="email-body">
+            <div class="welcome-message">
+                ¡Hola {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}!
+            </div>
+
+            <p>
+                Gracias por registrarte en <strong>{{ site_name }}</strong>. Para completar tu registro
+                y empezar a disfrutar de nuestros juegos diarios, necesitas confirmar
+                tu dirección de email.
+            </p>
+
+            <div class="button-container">
+                <a href="{{ confirmation_url }}" class="confirmation-button">
+                    ✓ Confirmar mi cuenta
+                </a>
+            </div>
+
+            <div class="info-box">
+                <strong>¿Qué puedes hacer una vez confirmada tu cuenta?</strong>
+                <ul>
+                    <li>Guardar tu progreso y estadísticas permanentemente</li>
+                    <li>Competir en el ranking diario</li>
+                    <li>Mantener tu racha de victorias</li>
+                    <li>Acceder a tu historial completo de partidas</li>
+                    <li>Participar en futuros torneos y eventos</li>
+                </ul>
+            </div>
+
+            <div class="security-notice">
+                <strong>⏰ Importante:</strong> Este enlace expirará en {{ token_expires_hours }} horas
+                por motivos de seguridad. Si necesitas un nuevo enlace, puedes solicitarlo
+                desde la página de inicio de sesión.
+            </div>
+
+            <p style="color: #718096; font-size: 14px; margin-top: 25px;">
+                Si no creaste esta cuenta, puedes ignorar este email de forma segura.
+                La cuenta no será activada sin confirmar este enlace.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                © 2025 {{ site_name }} - El juego diario de adivinanza de videojuegos
+            </p>
+            <p>
+                <a href="{{ confirmation_url }}">Confirmar cuenta</a> |
+                <a href="mailto:soporte@guessityet.com">Contactar soporte</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

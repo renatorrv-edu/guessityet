@@ -1,4 +1,4 @@
-/* Estilos base para GuessItYet - Estilo PyCharm/Android 15 */
+/* Estilos base para GuessItYet */
 
 /* Reset y configuración base */
 * {
@@ -56,7 +56,7 @@ p {
 .text-secondary { color: var(--text-secondary) !important; }
 .text-tertiary { color: var(--text-tertiary) !important; }
 
-/* Links - quitar subrayado por defecto */
+/* Links */
 a {
     color: var(--primary-color);
     text-decoration: none;
@@ -65,7 +65,7 @@ a {
 
 a:hover {
     color: var(--primary-light);
-    text-decoration: none; /* Quitar subrayado en hover */
+    text-decoration: none;
 }
 
 /* Enlaces específicos que SÍ deben tener subrayado en hover */
@@ -96,9 +96,9 @@ a:hover {
     gap: 0.75rem;
     transition: all var(--transition-fast);
     padding: 0.5rem 0;
-    margin-right: 0; /* Quitar margen derecho automático */
+    margin-right: 0;
     position: absolute;
-    left: 0; /* Forzar posición izquierda */
+    left: 0;
     z-index: 1001;
 }
 
@@ -131,7 +131,7 @@ a:hover {
 }
 
 .navbar-nav.me-auto {
-    margin: 0 auto !important; /* Centrar los menús principales */
+    margin: 0 auto !important;
     flex-direction: row;
     justify-content: center;
 }
@@ -142,14 +142,6 @@ a:hover {
     right: 0;
     margin-left: auto !important;
     margin-right: 0 !important;
-}
-
-/* Footer logo */
-.footer-logo {
-    height: 24px;
-    width: auto;
-    margin-right: 8px;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
 }
 
 /* Fallback si no hay logo disponible */
@@ -185,20 +177,6 @@ a:hover {
     pointer-events: none;
 }
 
-/* Cuando no hay logo en footer, mostrar icono temporal */
-.footer-logo:not([src]) + span::before {
-    content: '';
-    width: 24px;
-    height: 24px;
-    background: var(--primary-color);
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 8px;
-    position: relative;
-}
-
 .navbar-nav .nav-link {
     color: var(--text-secondary) !important;
     font-weight: 500;
@@ -218,8 +196,8 @@ a:hover {
     background: var(--focus-overlay);
 }
 
-/* Botón de cambio de tema */
-.theme-toggle {
+/* Botón de cambio de tema - como nav-link */
+.theme-toggle.nav-link {
     border: none !important;
     background: transparent !important;
     color: var(--text-secondary) !important;
@@ -233,20 +211,46 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 0.25rem;
+    /* Mejorar alineación vertical */
+    vertical-align: middle;
+    line-height: 1;
 }
 
-.theme-toggle:hover {
+.theme-toggle.nav-link:hover {
     color: var(--primary-color) !important;
     background: var(--hover-overlay) !important;
     transform: scale(1.05);
 }
 
-.theme-toggle:focus {
+.theme-toggle.nav-link:focus {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }
 
-/* Iconos del tema */
+/* Asegurar que el nav-item del tema también esté centrado */
+.navbar-nav .nav-item {
+    display: flex;
+    align-items: center;
+    min-height: 48px; /* Altura mínima consistente */
+}
+
+/* Centrar específicamente el botón de tema */
+.navbar-nav .nav-item .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/* Alineación consistente para todos los nav-links */
+.navbar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+}
+
+/* Iconos del tema - mantener la funcionalidad de transición */
 .theme-icon-light,
 .theme-icon-dark {
     position: absolute;
@@ -275,13 +279,79 @@ a:hover {
     transform: rotate(-180deg) scale(0.5);
 }
 
-.navbar-toggler {
-    border: none;
+/* Avatar de usuario en navegación */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all var(--transition-fast);
+}
+
+.user-avatar:hover {
+    background: var(--primary-dark);
+    transform: scale(1.1);
+}
+
+/* Dropdown del usuario */
+.dropdown-menu {
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0;
+    min-width: 220px;
+    background: var(--bg-surface-1);
+     z-index: 1050 !important;
+}
+
+.dropdown-header {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    padding: 0.75rem 1rem 0.5rem;
+    font-size: 0.9rem;
+}
+
+.dropdown-item {
+    color: var(--text-secondary);
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    transition: all var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background: var(--bg-surface-2);
     color: var(--text-primary);
 }
 
-.navbar-toggler:focus {
-    box-shadow: none;
+.dropdown-item.text-danger:hover {
+    background: var(--error-color);
+    color: white;
+}
+
+.dropdown-item i {
+    width: 16px;
+    text-align: center;
+}
+
+.dropdown-divider {
+    border-color: var(--border-subtle);
+    margin: 0.5rem 0;
+}
+
+/* Indicador de funciones próximamente */
+.dropdown-item.text-muted {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dropdown-item.text-muted:hover {
+    background: var(--bg-surface-1);
+    color: var(--text-tertiary);
 }
 
 /* Bootstrap overrides - Cards */
@@ -289,21 +359,13 @@ a:hover {
     background: var(--bg-surface-1);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-normal);
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-sm);
 }
 
 .card-header {
     background: var(--bg-surface-2);
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
-    font-weight: 600;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
 }
 
 .card-body {
@@ -317,12 +379,6 @@ a:hover {
     padding: 0.75rem 1.5rem;
     transition: all var(--transition-fast);
     border: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn:focus {
-    box-shadow: 0 0 0 3px var(--focus-overlay);
 }
 
 .btn-primary {
@@ -333,6 +389,17 @@ a:hover {
 .btn-primary:hover {
     background: var(--primary-dark);
     transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-outline-primary {
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-color);
     color: var(--text-on-primary);
 }
 
@@ -344,49 +411,22 @@ a:hover {
 
 .btn-secondary:hover {
     background: var(--bg-surface-3);
-    color: var(--text-primary);
-}
-
-.btn-success {
-    background: var(--success-color);
-    color: white;
-}
-
-.btn-warning {
-    background: var(--warning-color);
-    color: white;
-}
-
-.btn-danger {
-    background: var(--error-color);
-    color: white;
-}
-
-.btn-outline-primary {
-    color: var(--primary-color);
-    border: 2px solid var(--primary-color);
-    background: transparent;
-}
-
-.btn-outline-primary:hover {
-    background: var(--primary-color);
-    color: var(--text-on-primary);
+    transform: translateY(-1px);
 }
 
 /* Bootstrap overrides - Forms */
 .form-control {
-    background: var(--bg-surface-2);
+    background: var(--bg-surface-1);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     color: var(--text-primary);
     padding: 0.75rem 1rem;
-    transition: all var(--transition-fast);
 }
 
 .form-control:focus {
     background: var(--bg-surface-1);
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--focus-overlay);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
     color: var(--text-primary);
 }
 
@@ -400,87 +440,142 @@ a:hover {
     margin-bottom: 0.5rem;
 }
 
-.input-group-text {
-    background: var(--bg-surface-2);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-}
-
 /* Bootstrap overrides - Alerts */
 .alert {
-    border: none;
     border-radius: var(--radius-md);
-    border-left: 4px solid;
-    background: var(--bg-surface-1);
+    border: none;
+    padding: 1rem 1.25rem;
 }
 
 .alert-success {
-    border-left-color: var(--success-color);
-    background: var(--status-success-bg);
-    color: var(--status-success-text);
-}
-
-.alert-warning {
-    border-left-color: var(--warning-color);
-    background: var(--status-warning-bg);
-    color: var(--status-warning-text);
+    background: rgba(var(--success-rgb), 0.1);
+    color: var(--success-color);
+    border-left: 4px solid var(--success-color);
 }
 
 .alert-danger {
-    border-left-color: var(--error-color);
-    background: var(--status-error-bg);
-    color: var(--status-error-text);
+    background: rgba(var(--error-rgb), 0.1);
+    color: var(--error-color);
+    border-left: 4px solid var(--error-color);
+}
+
+.alert-warning {
+    background: rgba(var(--warning-rgb), 0.1);
+    color: var(--warning-color);
+    border-left: 4px solid var(--warning-color);
 }
 
 .alert-info {
-    border-left-color: var(--info-color);
-    background: var(--status-info-bg);
-    color: var(--status-info-text);
+    background: rgba(var(--info-rgb), 0.1);
+    color: var(--info-color);
+    border-left: 4px solid var(--info-color);
 }
 
-/* Bootstrap overrides - Badges */
-.badge {
-    border-radius: var(--radius-sm);
-    font-weight: 500;
-    padding: 0.375rem 0.75rem;
+/* Mejorar contraste del texto en toda la aplicación */
+.text-muted {
+    color: var(--text-secondary) !important;
 }
 
-.badge.bg-primary {
-    background: var(--primary-color) !important;
-    color: var(--text-on-primary);
+/* Forzar colores correctos en elementos específicos */
+p, .card-text, .description, .small, small {
+    color: var(--text-secondary) !important;
 }
 
-.badge.bg-success {
-    background: var(--success-color) !important;
+/* Texto principal siempre visible */
+h1, h2, h3, h4, h5, h6, .card-title, .fw-bold, strong {
+    color: var(--text-primary) !important;
 }
 
-.badge.bg-warning {
-    background: var(--warning-color) !important;
+/* Texto en áreas de contenido */
+.container p,
+.container small,
+.container .text-muted,
+.main-content p,
+.main-content small,
+.main-content .text-muted {
+    color: var(--text-secondary) !important;
 }
 
-.badge.bg-danger {
-    background: var(--error-color) !important;
+/* Asegurar que el texto del footer sea visible */
+footer p,
+footer small,
+footer .text-muted {
+    color: var(--text-secondary) !important;
 }
 
-/* Bootstrap overrides - Dropdowns */
-.dropdown-menu {
-    background: var(--bg-surface-1);
-    border: 1px solid var(--border-color);
+/* Texto específico para páginas de contenido como "Acerca de" */
+.content-text,
+.content p,
+.about-text,
+.how-to-play-text {
+    color: var(--text-secondary) !important;
+}
+
+/* Mejorar contraste en ejemplos y contenido especial */
+.example-text,
+.message-example,
+.placeholder-text,
+.demo-text {
+    color: var(--text-secondary) !important;
+    font-style: italic;
+}
+
+/* Cajas de ejemplo y demos */
+.example-box,
+.demo-box,
+.message-box,
+.sample-message {
+    background: var(--bg-surface-2) !important;
+    border: 1px solid var(--border-subtle) !important;
+    color: var(--text-secondary) !important;
+}
+
+.example-box p,
+.demo-box p,
+.message-box p,
+.sample-message p {
+    color: var(--text-secondary) !important;
+    margin-bottom: 0.5rem;
+}
+
+/* Mejorar legibilidad de texto en cajas blancas/claras */
+.bg-light,
+.bg-white,
+.card.bg-light,
+.alert.bg-light,
+.text-light-bg {
+    color: #2d3748 !important; /* Color oscuro para fondos claros */
+}
+
+.bg-light p,
+.bg-white p,
+.card.bg-light p,
+.alert.bg-light p,
+.text-light-bg p {
+    color: #2d3748 !important; /* Color oscuro para fondos claros */
+}
+
+/* Específico para cajas de ejemplo con fondo claro */
+.example-message,
+.sample-text,
+.demo-message {
+    background: var(--bg-surface-2) !important;
+    color: var(--text-primary) !important;
+    padding: 1rem;
     border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-subtle);
 }
 
-.dropdown-item {
-    color: var(--text-secondary);
-    transition: all var(--transition-fast);
+/* Forzar color oscuro en elementos con background claro */
+[style*="background: #f8f9fa"],
+[style*="background-color: #f8f9fa"],
+[style*="background: white"],
+[style*="background-color: white"],
+.bg-light * {
+    color: #2d3748 !important;
 }
 
-.dropdown-item:hover {
-    background: var(--bg-surface-2);
-    color: var(--text-primary);
-}
-
-/* Utility classes personalizadas */
+/* Utility classes */
 .bg-surface { background: var(--bg-surface) !important; }
 .bg-surface-1 { background: var(--bg-surface-1) !important; }
 .bg-surface-2 { background: var(--bg-surface-2) !important; }
@@ -523,7 +618,6 @@ footer a {
     text-decoration: none;
 }
 
-/* Hover para todos los enlaces del footer - más específico */
 footer a:hover,
 footer .list-unstyled a:hover,
 footer .container a:hover {
@@ -531,26 +625,30 @@ footer .container a:hover {
     text-decoration: none;
 }
 
-/* Efecto de desplazamiento para enlaces en listas */
 footer .list-unstyled a:hover {
     transform: translateX(2px);
     transition: all var(--transition-fast);
 }
 
-/* Enlaces externos del footer (como IGDB) - mantener color primario */
 footer a[target="_blank"]:hover {
     color: var(--primary-color) !important;
 }
 
-/* Tema claro - ajustar colores del footer */
 [data-theme="light"] footer a:hover,
 [data-theme="light"] footer .list-unstyled a:hover,
 [data-theme="light"] footer .container a:hover {
-    color: var(--text-primary) !important; /* En tema claro usar el color de texto principal */
+    color: var(--text-primary) !important;
 }
 
 [data-theme="light"] footer a[target="_blank"]:hover {
     color: var(--primary-color) !important;
+}
+
+.footer-logo {
+    height: 24px;
+    width: auto;
+    margin-right: 8px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
 }
 
 /* Scrollbar personalizada */
@@ -568,10 +666,10 @@ footer a[target="_blank"]:hover {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--border-strong);
+    background: var(--text-tertiary);
 }
 
-/* Responsive adjustments for the logo */
+/* Responsive design */
 @media (max-width: 576px) {
     .navbar-logo {
         height: 32px;
@@ -580,18 +678,17 @@ footer a[target="_blank"]:hover {
     .navbar-brand {
         font-size: 1.25rem;
         gap: 0.5rem;
-        position: static; /* En móvil volver a posición normal */
+        position: static;
     }
 
     .brand-text {
-        display: none; /* Ocultar texto en móviles muy pequeños */
+        display: none;
     }
 
     .footer-logo {
         height: 20px;
     }
 
-    /* En móvil reorganizar el navbar */
     .navbar-collapse {
         justify-content: flex-start;
         margin-top: 1rem;
@@ -607,6 +704,17 @@ footer a[target="_blank"]:hover {
         margin-top: 1rem;
         padding-top: 1rem;
         border-top: 1px solid var(--border-color);
+    }
+
+    .dropdown-menu {
+        min-width: 200px;
+        margin-top: 0.5rem;
+    }
+
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
     }
 }
 
@@ -631,7 +739,6 @@ footer a[target="_blank"]:hover {
         height: 22px;
     }
 
-    /* Ajustar espaciado en tablet */
     .navbar-brand {
         position: static;
     }
@@ -682,6 +789,29 @@ footer a[target="_blank"]:hover {
     outline: none;
 }
 
+/* Evitar backdrop-filter en elementos que causan blur no deseado */
+.profile-header,
+.auth-card,
+.hero-section {
+    backdrop-filter: none !important;
+}
+
+/* Si hay elementos específicos que necesitan el blur, usar una clase específica */
+.backdrop-blur {
+    backdrop-filter: blur(10px);
+}
+
+/* Elementos que pueden tener blur controlado */
+.glass-effect {
+    backdrop-filter: blur(5px);
+}
+
+/* Asegurar que overlays y controles mantengan su blur cuando sea necesario */
+.screenshot-nav-controls,
+.game-info-overlay {
+    backdrop-filter: blur(10px) !important;
+}
+
 /* Print styles */
 @media print {
     body {
@@ -694,4 +824,41 @@ footer a[target="_blank"]:hover {
     .btn {
         display: none !important;
     }
+}
+
+/* Fix específico para dropdown sobre imagen del juego */
+.dropdown-toggle {
+    position: relative;
+    z-index: 1051;
+}
+
+.dropdown-menu {
+    position: absolute !important;
+    z-index: 1052 !important;
+}
+
+/* Asegurar que el navbar no interfiera */
+.navbar {
+    z-index: 1040;
+}
+
+/* Si la imagen sigue estando por encima, reducir su z-index */
+.screenshot-container,
+.screenshot-main {
+    position: relative;
+    z-index: 1;
+}
+
+/* Forzar el contexto de apilamiento correcto */
+.navbar .dropdown {
+    position: static !important;
+}
+
+.navbar .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    z-index: 1052 !important;
+    transform: none !important;
 }

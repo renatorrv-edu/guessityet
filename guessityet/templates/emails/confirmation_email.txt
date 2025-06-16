@@ -1,0 +1,22 @@
+¡Hola {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}!
+
+Gracias por registrarte en {{ site_name }}. Para completar tu registro y empezar a disfrutar de nuestros juegos diarios, necesitas confirmar tu dirección de email.
+
+CONFIRMAR MI CUENTA:
+{{ confirmation_url }}
+
+¿Qué puedes hacer una vez confirmada tu cuenta?
+- Guardar tu progreso y estadísticas permanentemente
+- Competir en el ranking diario
+- Mantener tu racha de victorias
+- Acceder a tu historial completo de partidas
+- Participar en futuros torneos y eventos
+
+IMPORTANTE: Este enlace expirará en {{ token_expires_hours }} horas por motivos de seguridad. Si necesitas un nuevo enlace, puedes solicitarlo desde la página de inicio de sesión.
+
+Si no creaste esta cuenta, puedes ignorar este email de forma segura. La cuenta no será activada sin confirmar este enlace.
+
+---
+© 2025 {{ site_name }} - El juego diario de adivinanza de videojuegos
+Confirmar cuenta: {{ confirmation_url }}
+Contactar soporte: soporte@guessityet.com

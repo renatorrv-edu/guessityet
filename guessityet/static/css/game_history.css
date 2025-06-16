@@ -9,6 +9,14 @@
     margin-bottom: 2rem;
 }
 
+.stats-summary-compact {
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -16,10 +24,23 @@
     text-align: center;
 }
 
+.stats-grid-compact {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
 .stat-item {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.stat-item-compact {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .stat-value {
@@ -29,11 +50,22 @@
     margin-bottom: 0.25rem;
 }
 
+.stat-item-compact .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
 .stat-label {
     color: var(--text-secondary);
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.stat-item-compact .stat-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
 }
 
 /* Tarjeta de filtros */
@@ -89,25 +121,35 @@
 /* Grid de juegos */
 .game-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
+/* Tarjetas de juego individuales */
 .game-card {
     background: var(--bg-surface-1);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    padding: 1.5rem;
     transition: all var(--transition-normal);
     cursor: pointer;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeInUp 0.3s ease-out;
 }
 
 .game-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-8px);
     box-shadow: var(--shadow-lg);
     border-color: var(--primary-color);
+}
+
+.game-card:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 .game-thumbnail {
@@ -134,18 +176,35 @@
     transform: scale(1.05);
 }
 
+/* Encabezado de la tarjeta */
+.game-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 1rem;
+}
+
+.game-number {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.game-number::before {
+    content: "Juego #";
+}
+
 .game-date {
-    position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 0.375rem 0.75rem;
-    border-radius: var(--radius-md);
     font-size: 0.875rem;
-    font-weight: 600;
-    backdrop-filter: blur(10px);
-    z-index: 2;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: right;
+    flex-shrink: 0;
 }
 
 .completion-badge {
@@ -178,7 +237,9 @@
 }
 
 .game-info {
-    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .game-title {
@@ -191,6 +252,18 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+.game-title-completed {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.game-title-completed strong {
+    color: var(--text-primary);
+    font-size: 1rem;
 }
 
 .game-meta {
@@ -209,6 +282,16 @@
     text-align: center;
     margin-right: 0.5rem;
     opacity: 0.7;
+}
+
+.game-basic-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    width: 100%;
 }
 
 .game-stats {
@@ -240,9 +323,259 @@
     color: var(--text-tertiary);
 }
 
+/* Indicadores de progreso en grid */
+.attempt-indicators-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.attempt-indicators-grid .attempt-indicator {
+    width: 100%;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+    border: 2px solid transparent;
+}
+
+/* Indicadores de progreso detallados */
+.progress-indicators {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 200px;
+}
+
+/* Fila de iconos de intentos */
+.attempt-icons-row {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.attempt-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.attempt-icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Estados de los indicadores */
+.attempt-indicator,
+.attempt-indicators-grid .attempt-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: all var(--transition-fast);
+    border: 2px solid transparent;
+}
+
+.attempt-indicator.correct,
+.attempt-indicators-grid .attempt-indicator.correct,
+.attempt-icon.correct {
+    background: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+.attempt-indicator.wrong,
+.attempt-indicators-grid .attempt-indicator.wrong,
+.attempt-icon.wrong {
+    background: var(--error-color);
+    color: white;
+    border-color: var(--error-color);
+}
+
+.attempt-icon.franchise {
+    background: var(--warning-color);
+    color: white;
+    border-color: var(--warning-color);
+}
+
+.attempt-icon.skipped {
+    background: #6b7280;
+    color: white;
+    border-color: #6b7280;
+}
+
+.attempt-indicator.unused,
+.attempt-indicators-grid .attempt-indicator.unused,
+.attempt-icon.unused,
+.attempt-icon.not-reached {
+    background: var(--bg-surface-2);
+    color: var(--text-tertiary);
+    border-color: var(--border-color);
+}
+
+.attempt-indicator.unplayed,
+.attempt-indicator.not-played,
+.attempt-indicators-grid .attempt-indicator.unplayed,
+.attempt-indicators-grid .attempt-indicator.not-played,
+.attempt-icon.not-played {
+    background: var(--bg-surface);
+    color: var(--text-tertiary);
+    border-color: var(--border-subtle);
+}
+
+/* Centrar indicadores cuando es necesario */
+.attempt-indicators {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    padding: 0 1rem;
+}
+
+/* Sección de estado */
+.game-status-section {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.game-status {
+    display: flex;
+    justify-content: center;
+}
+
+/* Badges de estado */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.completed {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-badge.failed {
+    background: rgba(244, 67, 54, 0.1);
+    color: var(--error-color);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.status-badge.not-played {
+    background: rgba(95, 99, 104, 0.1);
+    color: var(--text-tertiary);
+    border: 1px solid rgba(95, 99, 104, 0.3);
+}
+
+.status-badge.guessed-it {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    border: 2px solid #FFD700;
+    animation: shimmer 2s ease-in-out infinite;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Badges de resumen */
+.attempt-summary {
+    display: flex;
+    justify-content: center;
+}
+
+.guessed-it-badge {
+    background: linear-gradient(45deg, #fbbf24, #f59e0b);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 14px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    animation: pulse 2s infinite;
+}
+
+.success-badge {
+    background: var(--success-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.failed-badge {
+    background: var(--error-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.not-played-badge {
+    background: #6b7280;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.franchise-badge {
+    background: var(--warning-color);
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Botones */
 .game-actions {
     display: flex;
     gap: 0.5rem;
+}
+
+.game-action {
+    display: flex;
+    justify-content: center;
 }
 
 .btn-view {
@@ -271,6 +604,101 @@
     outline-offset: 2px;
 }
 
+.btn-play {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-play:hover {
+    background: #45a049;
+    transform: scale(1.1);
+}
+
+/* Footer de la tarjeta */
+.game-card-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-play-card {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: #2d7a2d;
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-play-card:hover {
+    background: #1e5f1e;
+    color: white;
+    transform: scale(1.02);
+    text-decoration: none;
+}
+
+.btn-outline-success {
+    border-color: #2d7a2d;
+    color: #2d7a2d;
+}
+
+.btn-outline-success:hover {
+    background-color: #2d7a2d;
+    border-color: #2d7a2d;
+    color: white;
+}
+
+.game-action .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.game-action .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Información para usuarios invitados */
+.guest-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
+.login-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-style: italic;
+    transition: color 0.2s ease;
+}
+
+.login-link:hover {
+    color: var(--primary-light);
+    text-decoration: none;
+}
+
 /* Paginación */
 .pagination-container {
     display: flex;
@@ -285,6 +713,14 @@
     border: 1px solid var(--border-color);
     display: flex;
     gap: 0.25rem;
+}
+
+.page-header {
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin-bottom: 2rem !important;
 }
 
 .page-link {
@@ -355,35 +791,117 @@
     margin-right: 1rem;
 }
 
-/* Badges de estado */
-.status-badge {
-    display: inline-flex;
+/* Contenedor principal del historial moderno */
+.games-history-container {
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+}
+
+/* Fila de cada juego en formato moderno */
+.game-history-row {
+    display: grid;
+    grid-template-columns: 150px 1fr 250px 100px;
+    gap: 2rem;
     align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: all var(--transition-normal);
+    background: var(--bg-surface-1);
+}
+
+.game-history-row:last-child {
+    border-bottom: none;
+}
+
+.game-history-row:hover {
+    background: var(--bg-surface-2);
+    transform: translateX(8px);
+}
+
+/* Información del día */
+.game-day {
+    display: flex;
+    flex-direction: column;
     gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 500;
+}
+
+.day-label {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.day-date {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.status-badge.completed {
-    background: rgba(76, 175, 80, 0.1);
-    color: var(--success-color);
-    border: 1px solid rgba(76, 175, 80, 0.3);
+.game-content {
+    padding: 0 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.status-badge.failed {
-    background: rgba(244, 67, 54, 0.1);
-    color: var(--error-color);
-    border: 1px solid rgba(244, 67, 54, 0.3);
+/* Modal para juego aleatorio */
+.modal-content {
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
 }
 
-.status-badge.not-played {
-    background: rgba(95, 99, 104, 0.1);
-    color: var(--text-tertiary);
-    border: 1px solid rgba(95, 99, 104, 0.3);
+.modal-header {
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-surface-2);
+}
+
+.modal-title {
+    color: var(--text-primary);
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+.loading-random-game {
+    padding: 2rem;
+}
+
+.loading-random-game p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 /* Responsive design */
@@ -410,6 +928,11 @@
     }
 
     .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .stats-grid-compact {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
     }
@@ -452,6 +975,59 @@
         padding: 0.5rem 0.75rem;
         font-size: 0.875rem;
     }
+
+    .game-card {
+        padding: 1rem;
+    }
+
+    .attempt-indicators-grid {
+        gap: 0.25rem;
+    }
+
+    .attempt-indicators-grid .attempt-indicator {
+        height: 35px;
+        font-size: 0.75rem;
+    }
+
+    .attempt-icons-row {
+        gap: 0.25rem;
+    }
+
+    .attempt-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+    }
+
+    .progress-indicators {
+        min-width: auto;
+    }
+
+    .game-history-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1.5rem 1rem;
+        text-align: center;
+    }
+
+    .game-day {
+        order: 1;
+        align-items: center;
+    }
+
+    .attempt-indicators {
+        order: 2;
+        padding: 0;
+    }
+
+    .game-status {
+        order: 3;
+    }
+
+    .game-actions {
+        order: 4;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 480px) {
@@ -463,9 +1039,15 @@
         font-size: 1rem;
     }
 
-    .stats-grid {
+    .stats-grid,
+    .stats-grid-compact {
         grid-template-columns: 1fr;
         gap: 0.75rem;
+        text-align: center;
+    }
+
+    .stat-item-compact {
+        justify-content: center;
     }
 
     .completion-badge {
@@ -486,30 +1068,31 @@
     .empty-state i {
         font-size: 3rem;
     }
-}
 
-/* Animaciones de entrada */
-.game-card {
-    animation: fadeInUp 0.3s ease-out;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+    .attempt-indicators-grid .attempt-indicator {
+        height: 30px;
+        font-size: 0.7rem;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+
+    .btn-view, .btn-play {
+        width: 36px;
+        height: 36px;
+        font-size: 0.875rem;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+
+    .game-card-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
     }
 }
 
 /* Estados de focus para accesibilidad */
-.game-card:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
-}
-
 .filter-input:focus-visible {
     outline: none;
 }

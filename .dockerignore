@@ -1,57 +1,29 @@
-# Git
-.git
-.gitignore
-README.md
-.github
-
 # Python
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
-env
-venv
-.venv
-pip-log.txt
-pip-delete-this-directory.txt
-.tox
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
 .coverage
-.coverage.*
-.pytest_cache
-htmlcov
 
-# Django
+# Git
+.git/
+.gitignore
+
+# Logs
+logs/
 *.log
-local_settings.py
-db.sqlite3
-media/
 
-# Node.js (si tuvieras frontend)
-node_modules
-npm-debug.log*
-
-# IDE
-.vscode
-.idea
+# IDEs
+.vscode/
+.idea/
 *.swp
 *.swo
-*~
 
-# OS
+# Archivos temporales
 .DS_Store
 Thumbs.db
 
-# Docker
-Dockerfile*
-docker-compose*
-.dockerignore
-
-# Archivos de entorno
-.env
-.env.local
-.env.production
-
-# Archivos temporales
-*.tmp
-*.temp
+# Documentación
+*.md
+README.md

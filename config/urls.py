@@ -8,8 +8,7 @@ from django.views.generic import RedirectView
 urlpatterns = [
     # Administración de Django
     path("admin/", admin.site.urls),
-    # URLs de autenticación de Django (SIN NAMESPACE)
-    path("cuentas/", include("django.contrib.auth.urls")),
+    # path("cuentas/", include("django.contrib.auth.urls")),
     # Aplicación principal GuessItYet
     path("", include("guessityet.urls")),
 ]

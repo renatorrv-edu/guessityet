@@ -450,3 +450,33 @@
     outline: 2px solid var(--primary-color);
     outline-offset: 4px;
 }
+
+/* Indicadores de validación de contraseña */
+.password-requirements {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.password-requirements ul {
+    margin: 0;
+}
+
+.password-requirements li {
+    padding: 0.25rem 0;
+    transition: all var(--transition-fast);
+}
+
+.password-requirements .text-success {
+    color: var(--success-color) !important;
+}
+
+.password-requirements .text-danger {
+    color: var(--error-color) !important;
+}
+
+.password-requirements .text-muted {
+    color: var(--text-tertiary) !important;
+}
